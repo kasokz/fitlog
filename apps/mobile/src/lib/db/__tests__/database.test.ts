@@ -40,7 +40,7 @@ describe('database module', () => {
 	});
 
 	describe('schema migration', () => {
-		it('creates the schema_version table with version 1', async () => {
+		it('creates the schema_version table with current version', async () => {
 			await getDb();
 
 			const rows = await dbQuery<{ version: number; applied_at: string }>(
@@ -48,7 +48,7 @@ describe('database module', () => {
 			);
 
 			expect(rows).toHaveLength(1);
-			expect(rows[0].version).toBe(1);
+			expect(rows[0].version).toBe(2);
 			expect(rows[0].applied_at).toBeTruthy();
 		});
 
@@ -71,6 +71,72 @@ describe('database module', () => {
 			expect(columnNames).toContain('created_at');
 			expect(columnNames).toContain('updated_at');
 			expect(columnNames).toContain('deleted_at');
+		});
+
+		it('creates the programs table with correct columns', async () => {
+			await getDb();
+
+			const rows = await dbQuery<{ name: string; type: string }>(
+				"PRAGMA table_info('programs')"
+			);
+
+			const columnNames = rows.map((r) => r.name);
+			expect(columnNames).toContain('id');
+			expect(columnNames).toContain('name');
+			expect(columnNames).toContain('description');
+			expect(columnNames).toContain('created_at');
+			expect(columnNames).toContain('updated_at');
+			expect(columnNames).toContain('deleted_at');
+		});
+
+		it('creates the training_days table with correct columns', async () => {
+			await getDb();
+
+			const rows = await dbQuery<{ name: string; type: string }>(
+				"PRAGMA table_info('training_days')"
+			);
+
+			const columnNames = rows.map((r) => r.name);
+			expect(columnNames).toContain('id');
+			expect(columnNames).toContain('program_id');
+			expect(columnNames).toContain('name');
+			expect(columnNames).toContain('sort_order');
+			expect(columnNames).toContain('created_at');
+			expect(columnNames).toContain('updated_at');
+			expect(columnNames).toContain('deleted_at');
+		});
+
+		it('creates the exercise_assignments table with correct columns', async () => {
+			await getDb();
+
+			const rows = await dbQuery<{ name: string; type: string }>(
+				"PRAGMA table_info('exercise_assignments')"
+			);
+
+			const columnNames = rows.map((r) => r.name);
+			expect(columnNames).toContain('id');
+			expect(columnNames).toContain('training_day_id');
+			expect(columnNames).toContain('exercise_id');
+			expect(columnNames).toContain('sort_order');
+			expect(columnNames).toContain('target_sets');
+			expect(columnNames).toContain('min_reps');
+			expect(columnNames).toContain('max_reps');
+		});
+
+		it('creates the mesocycles table with correct columns', async () => {
+			await getDb();
+
+			const rows = await dbQuery<{ name: string; type: string }>(
+				"PRAGMA table_info('mesocycles')"
+			);
+
+			const columnNames = rows.map((r) => r.name);
+			expect(columnNames).toContain('id');
+			expect(columnNames).toContain('program_id');
+			expect(columnNames).toContain('weeks_count');
+			expect(columnNames).toContain('deload_week_number');
+			expect(columnNames).toContain('start_date');
+			expect(columnNames).toContain('current_week');
 		});
 
 		it('creates indexes on exercises table', async () => {
@@ -97,7 +163,7 @@ describe('database module', () => {
 			await getDb();
 
 			const logMessages = consoleSpy.mock.calls.map((c) => c[0]);
-			expect(logMessages).toContain('[DB] Schema up to date {"version":1}');
+			expect(logMessages).toContain('[DB] Schema up to date {"version":2}');
 
 			consoleSpy.mockRestore();
 		});

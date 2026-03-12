@@ -17,7 +17,7 @@ import { dbExecute, dbQuery } from '../database.js';
 // ── Row mapping ──
 
 /** Raw row shape from SQLite (booleans as 0/1, JSON as string) */
-interface ExerciseRow {
+type ExerciseRow = {
 	id: string;
 	name: string;
 	description: string | null;
@@ -29,7 +29,7 @@ interface ExerciseRow {
 	created_at: string;
 	updated_at: string;
 	deleted_at: string | null;
-}
+};
 
 function rowToExercise(row: ExerciseRow): Exercise {
 	return {

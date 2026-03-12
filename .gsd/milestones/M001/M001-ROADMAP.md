@@ -58,7 +58,7 @@ This milestone is complete only when all are true:
 - [x] **S01: Data Layer & Exercise Library** `risk:high` `depends:[]`
   > After this: User can browse a curated exercise library with search/filter by muscle group and equipment, create custom exercises, and all data persists in SQLite across app restarts.
 
-- [ ] **S02: Programs & Mesocycles** `risk:medium` `depends:[S01]`
+- [x] **S02: Programs & Mesocycles** `risk:medium` `depends:[S01]`
   > After this: User can create a training program with named training days, assign exercises with target rep ranges and set counts, and define a mesocycle with week count and deload week position.
 
 - [ ] **S03: Workout Logging** `risk:high` `depends:[S01,S02]`
