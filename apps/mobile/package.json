@@ -26,6 +26,7 @@
 		"@capacitor/ios": "^8.0.1",
 		"@capacitor/preferences": "^8.0.0",
 		"@capacitor/splash-screen": "^8.0.1",
+		"@capgo/capacitor-fast-sql": "^8.0.23",
 		"@capgo/capacitor-updater": "^8.43.9",
 		"@capgo/cli": "^7.84.5",
 		"@inlang/paraglide-js": "^2.6.0",
@@ -39,6 +40,7 @@
 		"jsdom": "^28.1.0",
 		"mode-watcher": "^1.1.0",
 		"runed": "^0.37.1",
+		"sql.js": "^1.14.1",
 		"svelte": "^5.45.6",
 		"svelte-check": "^4.3.4",
 		"svelte-sonner": "^1.0.7",
@@ -48,5 +50,9 @@
 		"vite-plugin-devtools-json": "^1.0.0",
 		"vitest": "^4.0.17",
 		"zod": "^4.3.6"
+	},
+	"dependencies": {
+		"formsnap": "^2.0.1",
+		"sveltekit-superforms": "^2.30.0"
 	}
 }

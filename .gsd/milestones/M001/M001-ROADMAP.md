@@ -55,7 +55,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Data Layer & Exercise Library** `risk:high` `depends:[]`
+- [x] **S01: Data Layer & Exercise Library** `risk:high` `depends:[]`
   > After this: User can browse a curated exercise library with search/filter by muscle group and equipment, create custom exercises, and all data persists in SQLite across app restarts.
 
 - [ ] **S02: Programs & Mesocycles** `risk:medium` `depends:[S01]`
