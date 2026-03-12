@@ -1,0 +1,28 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (will be installed inside Docker)
+node_modules
+
+# Build outputs (will be built inside Docker)
+apps/*/build
+apps/*/.svelte-kit
+packages/*/dist
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# CI/CD
+.gitlab
+.gitlab-ci.yml
+
+# Documentation & references
+*.md
+
+# Misc
+.env*.local

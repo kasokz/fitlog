@@ -1,0 +1,40 @@
+stages:
+  - check
+  - build-image
+  - deploy
+
+include:
+  - local: .gitlab/ci/.gitlab-ci.build-with-docker.yml
+
+variables:
+  APP: web
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP:$CI_COMMIT_SHA
+  IMAGE_TAG_LATEST: $CI_REGISTRY_IMAGE/$APP:latest
+
+deploy:
+  stage: deploy
+  image:
+    name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/alpine/k8s:1.33.3
+  environment:
+    name: $ENVIRONMENT
+  needs:
+    - job: build-image
+  script:
+    - kubectl config use-context $DEFAULT_KUBE_CONTEXT
+    - NAMESPACE_SUFFIX=$(echo "$ENVIRONMENT" | awk '{print tolower($0)}')
+    - |
+      helm upgrade --install $APP \
+        ./apps/$APP/chart/ -n apps-$NAMESPACE_SUFFIX \
+        --create-namespace \
+        --set ci.projectPathSlug=$CI_PROJECT_PATH_SLUG \
+        --set ci.environmentSlug=$CI_ENVIRONMENT_SLUG \
+        --set imageWithTag=$IMAGE_TAG \
+        --set "ingress.hosts={$HOST}" \
+        --set autoscaling.minReplicas=$AUTOSCALING_MIN_REPLICAS \
+        --set autoscaling.maxReplicas=$AUTOSCALING_MAX_REPLICAS
+      kubectl create secret docker-registry gitlab-registry \
+        --docker-server="$CI_REGISTRY" \
+        --docker-username="$CI_DEPLOY_USER" \
+        --docker-password="$CI_DEPLOY_PASSWORD" \
+        --docker-email="$GITLAB_USER_EMAIL" -o yaml \
+        --dry-run=client | kubectl apply -n apps-$NAMESPACE_SUFFIX -f -

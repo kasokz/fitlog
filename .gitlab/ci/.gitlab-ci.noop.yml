@@ -1,0 +1,7 @@
+stages:
+  - noop
+
+noop:
+  stage: noop
+  script:
+    - echo "This is a noop job. Run because turbo-ignore detected no changes to process."

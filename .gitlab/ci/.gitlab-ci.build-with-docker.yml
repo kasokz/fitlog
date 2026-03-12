@@ -1,0 +1,32 @@
+stages:
+  - build-image
+
+build-image:
+  stage: build-image
+  image:
+    name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/moby/buildkit:rootless
+    entrypoint: [""]
+  environment:
+    name: $ENVIRONMENT
+  variables:
+    BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
+  before_script:
+    - mkdir -p ~/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
+  script:
+    - |
+      BUILD_ARGS="--opt build-arg:TURBO_TEAM=$TURBO_TEAM"
+      BUILD_ARGS="$BUILD_ARGS --opt build-arg:TURBO_TOKEN=$TURBO_TOKEN"
+
+      IFS=','
+      for var in $BUILD_TIME_ARGS; do
+        BUILD_ARGS="$BUILD_ARGS --opt build-arg:$var=$(eval echo \$$var)"
+      done
+      unset IFS
+
+      buildctl-daemonless.sh build \
+        --frontend dockerfile.v0 \
+        --local context=$CI_PROJECT_DIR \
+        --local dockerfile=$CI_PROJECT_DIR/apps/$APP \
+        $BUILD_ARGS \
+        --output type=image,\"name=$IMAGE_TAG,$IMAGE_TAG_LATEST\",push=true

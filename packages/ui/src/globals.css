@@ -1,0 +1,348 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source '../../../packages/ui/src/**/*.{js,ts,jsx,tsx,svelte,astro}';
+
+@custom-variant dark (&:is(.dark *));
+:root {
+	--background: oklch(0.98 0.01 150);
+	--foreground: oklch(0.15 0.02 150);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.15 0.02 150);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.15 0.02 150);
+	--primary: oklch(0.6149 0.2522 29.116);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.3845 0.0562 149.3267);
+	--secondary-foreground: oklch(0.99 0 0);
+	--muted: oklch(0.92 0.02 150);
+	--muted-foreground: oklch(0.35 0.03 150);
+	--accent: oklch(0.94 0.02 150);
+	--accent-foreground: oklch(0.3845 0.0562 149.3267);
+	--destructive: oklch(0.55 0.22 25);
+	--destructive-foreground: oklch(0.99 0 0);
+	--border: oklch(0.85 0.02 150);
+	--input: oklch(0.9 0.01 150);
+	--ring: oklch(0.6149 0.2522 29.116);
+	--chart-1: oklch(0.6149 0.2522 29.116);
+	--chart-2: oklch(0.3845 0.0562 149.3267);
+	--chart-3: oklch(0.75 0.12 60);
+	--chart-4: oklch(0.45 0.1 160);
+	--chart-5: oklch(0.65 0.15 35);
+	--sidebar: oklch(0.15 0.02 150);
+	--sidebar-foreground: oklch(0.98 0.01 150);
+	--sidebar-primary: oklch(0.6149 0.2522 29.116);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.25 0.03 150);
+	--sidebar-accent-foreground: oklch(1 0 0);
+	--sidebar-border: oklch(0.25 0.03 150);
+	--sidebar-ring: oklch(0.6149 0.2522 29.116);
+	--font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+	--font-serif: Georgia, serif;
+	--font-mono: ui-monospace, monospace;
+	--radius: 0.125rem;
+	--shadow-x: 2px;
+	--shadow-y: 2px;
+	--shadow-blur: 0px;
+	--shadow-spread: 0px;
+	--shadow-opacity: 0.2;
+	--shadow-color: oklch(0 0 0);
+	--shadow-2xs: 2px 2px 0px 0px hsl(0 0% 0% / 0.1);
+	--shadow-xs: 2px 2px 0px 0px hsl(0 0% 0% / 0.1);
+	--shadow-sm: 2px 2px 0px 0px hsl(0 0% 0% / 0.2), 2px 1px 2px -1px hsl(0 0% 0% / 0.2);
+	--shadow: 2px 2px 0px 0px hsl(0 0% 0% / 0.2), 2px 1px 2px -1px hsl(0 0% 0% / 0.2);
+	--shadow-md: 2px 2px 0px 0px hsl(0 0% 0% / 0.2), 2px 2px 4px -1px hsl(0 0% 0% / 0.2);
+	--shadow-lg: 2px 2px 0px 0px hsl(0 0% 0% / 0.2), 2px 4px 6px -1px hsl(0 0% 0% / 0.2);
+	--shadow-xl: 2px 2px 0px 0px hsl(0 0% 0% / 0.2), 2px 8px 10px -1px hsl(0 0% 0% / 0.2);
+	--shadow-2xl: 2px 2px 0px 0px hsl(0 0% 0% / 0.5);
+	--tracking-normal: -0.01em;
+	--spacing: 0.25rem;
+}
+
+.dark {
+	--background: oklch(0.12 0.02 150);
+	--foreground: oklch(0.98 0.01 150);
+	--card: oklch(0.15 0.02 150);
+	--card-foreground: oklch(0.98 0.01 150);
+	--popover: oklch(0.15 0.02 150);
+	--popover-foreground: oklch(0.98 0.01 150);
+	--primary: oklch(0.6149 0.2522 29.116);
+	--primary-foreground: oklch(1 0 0);
+	--secondary: oklch(0.454 0.0684 148.843);
+	--secondary-foreground: oklch(1 0 0);
+	--muted: oklch(0.22 0.03 150);
+	--muted-foreground: oklch(0.75 0.02 150);
+	--accent: oklch(0.25 0.03 150);
+	--accent-foreground: oklch(1 0 0);
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(1 0 0);
+	--border: oklch(0.25 0.03 150);
+	--input: oklch(0.2 0.03 150);
+	--ring: oklch(0.6149 0.2522 29.116);
+	--chart-1: oklch(0.6149 0.2522 29.116);
+	--chart-2: oklch(0.454 0.0684 148.843);
+	--chart-3: oklch(0.8 0.15 65);
+	--chart-4: oklch(0.55 0.12 170);
+	--chart-5: oklch(0.7 0.18 40);
+	--sidebar: oklch(0.08 0.02 150);
+	--sidebar-foreground: oklch(0.98 0.01 150);
+	--sidebar-primary: oklch(0.6149 0.2522 29.116);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.2 0.03 150);
+	--sidebar-accent-foreground: oklch(1 0 0);
+	--sidebar-border: oklch(0.2 0.03 150);
+	--sidebar-ring: oklch(0.6149 0.2522 29.116);
+	--font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+	--font-serif: Georgia, serif;
+	--font-mono: ui-monospace, monospace;
+	--radius: 0.125rem;
+	--shadow-x: 3px;
+	--shadow-y: 3px;
+	--shadow-blur: 0px;
+	--shadow-spread: 0px;
+	--shadow-opacity: 0.4;
+	--shadow-color: oklch(0 0 0);
+	--shadow-2xs: 3px 3px 0px 0px hsl(0 0% 0% / 0.2);
+	--shadow-xs: 3px 3px 0px 0px hsl(0 0% 0% / 0.2);
+	--shadow-sm: 3px 3px 0px 0px hsl(0 0% 0% / 0.4), 3px 1px 2px -1px hsl(0 0% 0% / 0.4);
+	--shadow: 3px 3px 0px 0px hsl(0 0% 0% / 0.4), 3px 1px 2px -1px hsl(0 0% 0% / 0.4);
+	--shadow-md: 3px 3px 0px 0px hsl(0 0% 0% / 0.4), 3px 2px 4px -1px hsl(0 0% 0% / 0.4);
+	--shadow-lg: 3px 3px 0px 0px hsl(0 0% 0% / 0.4), 3px 4px 6px -1px hsl(0 0% 0% / 0.4);
+	--shadow-xl: 3px 3px 0px 0px hsl(0 0% 0% / 0.4), 3px 8px 10px -1px hsl(0 0% 0% / 0.4);
+	--shadow-2xl: 3px 3px 0px 0px hsl(0 0% 0% / 1);
+}
+
+@theme inline {
+	--font-sans: var(--font-sans);
+	--font-mono: var(--font-mono);
+	--font-serif: var(--font-serif);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+
+	--shadow-2xs: var(--shadow-2xs);
+	--shadow-xs: var(--shadow-xs);
+	--shadow-sm: var(--shadow-sm);
+	--shadow: var(--shadow);
+	--shadow-md: var(--shadow-md);
+	--shadow-lg: var(--shadow-lg);
+	--shadow-xl: var(--shadow-xl);
+	--shadow-2xl: var(--shadow-2xl);
+
+	--tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+	--tracking-tight: calc(var(--tracking-normal) - 0.025em);
+	--tracking-normal: var(--tracking-normal);
+	--tracking-wide: calc(var(--tracking-normal) + 0.025em);
+	--tracking-wider: calc(var(--tracking-normal) + 0.05em);
+	--tracking-widest: calc(var(--tracking-normal) + 0.1em);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+		touch-action: manipulation;
+	}
+	body {
+		@apply bg-background text-foreground;
+		letter-spacing: var(--tracking-normal);
+	}
+}
+
+/* driver.js tutorial coach mark color theme */
+.driver-popover.tutorial-coach-mark {
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-title {
+	color: var(--primary-foreground);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-description {
+	color: var(--primary-foreground);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-close-btn {
+	color: var(--primary-foreground);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-progress-text {
+	color: var(--primary-foreground);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-arrow-side-left {
+	border-left-color: var(--primary);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-arrow-side-right {
+	border-right-color: var(--primary);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-arrow-side-top {
+	border-top-color: var(--primary);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-arrow-side-bottom {
+	border-bottom-color: var(--primary);
+}
+
+.driver-popover.tutorial-coach-mark .driver-popover-prev-btn,
+.driver-popover.tutorial-coach-mark .driver-popover-next-btn {
+	background-color: var(--primary-foreground);
+	color: var(--primary);
+	text-shadow: none;
+}
+
+@utility container {
+	margin-inline: auto;
+	padding-inline: 2rem;
+}
+
+/* Safe area utilities for devices with notches / Dynamic Island / home indicator */
+
+/* Base safe area utilities (no offset) */
+@utility pt-safe-top {
+	padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe-bottom {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility py-safe {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pl-safe-left {
+	padding-left: env(safe-area-inset-left);
+}
+
+@utility pr-safe-right {
+	padding-right: env(safe-area-inset-right);
+}
+
+@utility px-safe {
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
+/*
+ * Calc-based safe area utilities — add an arbitrary value on top of the safe area inset.
+ */
+@utility pt-safe-top-* {
+	padding-top: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-top));
+}
+
+@utility pb-safe-bottom-* {
+	padding-bottom: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-bottom));
+}
+
+@utility pl-safe-left-* {
+	padding-left: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-left));
+}
+
+@utility pr-safe-right-* {
+	padding-right: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-right));
+}
+
+@utility px-safe-* {
+	padding-left: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-left));
+	padding-right: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-right));
+}
+
+@utility py-safe-* {
+	padding-top: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-top));
+	padding-bottom: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-bottom));
+}
+
+/* Base safe area utilities (no offset) */
+@utility mt-safe-top {
+	margin-top: env(safe-area-inset-top);
+}
+
+@utility mb-safe-bottom {
+	margin-bottom: env(safe-area-inset-bottom);
+}
+
+@utility my-safe {
+	margin-top: env(safe-area-inset-top);
+	margin-bottom: env(safe-area-inset-bottom);
+}
+
+@utility ml-safe-left {
+	margin-left: env(safe-area-inset-left);
+}
+
+@utility mr-safe-right {
+	margin-right: env(safe-area-inset-right);
+}
+
+@utility mx-safe {
+	margin-left: env(safe-area-inset-left);
+	margin-right: env(safe-area-inset-right);
+}
+
+/*
+ * Calc-based safe area utilities — add an arbitrary value on top of the safe area inset.
+ */
+@utility mt-safe-top-* {
+	margin-top: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-top));
+}
+
+@utility mb-safe-bottom-* {
+	margin-bottom: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-bottom));
+}
+
+@utility ml-safe-left-* {
+	margin-left: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-left));
+}
+
+@utility mr-safe-right-* {
+	margin-right: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-right));
+}
+
+@utility mx-safe-* {
+	margin-left: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-left));
+	margin-right: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-right));
+}
+
+@utility my-safe-* {
+	margin-top: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-top));
+	margin-bottom: calc((--value(integer) * var(--spacing)) + env(safe-area-inset-bottom));
+}
+

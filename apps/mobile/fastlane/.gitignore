@@ -1,0 +1,7 @@
+keys
+
+screenshots/**/*.png
+!screenshots/background.png
+
+metadata/android/**/*.png
+!metadata/android/**/background.png

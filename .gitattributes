@@ -1,0 +1,7 @@
+# Git LFS tracking for large binary assets
+# Uncomment and adjust paths as needed for your project:
+# apps/mobile/assets/*.png filter=lfs diff=lfs merge=lfs -text
+# apps/mobile/src/assets/**/*.png filter=lfs diff=lfs merge=lfs -text
+# apps/mobile/src/assets/**/*.mp3 filter=lfs diff=lfs merge=lfs -text
+# apps/mobile/android/app/src/main/res/**/*.png filter=lfs diff=lfs merge=lfs -text
+# apps/mobile/ios/App/App/Assets.xcassets/**/*.png filter=lfs diff=lfs merge=lfs -text

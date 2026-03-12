@@ -1,0 +1,27 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "paths": {
+      "$lib": ["./src/lib"],
+      "$lib/*": ["./src/lib/*"],
+      "#components/ui": ["./src/components/ui"],
+      "#components/ui/*": ["./src/components/ui/*"],
+      "#components": ["./src/components"],
+      "#components/*": ["./src/components/*"],
+      "#utils": ["./src/utils"],
+      "#hooks": ["./src/hooks"],
+      "#hooks/*": ["./src/hooks/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

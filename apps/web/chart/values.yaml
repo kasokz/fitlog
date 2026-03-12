@@ -1,0 +1,14 @@
+ci:
+  projectPathSlug: ""
+  environmentSlug: ""
+
+imageWithTag: my-app/web:latest
+ingress:
+  hosts:
+    - app.example.com
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
+
+secrets: {}

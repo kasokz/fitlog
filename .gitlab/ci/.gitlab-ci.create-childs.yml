@@ -1,0 +1,47 @@
+image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:22-alpine
+
+stages:
+  - check
+  - handover
+
+check:
+  stage: check
+  script:
+    - apk add --no-cache git curl jq
+    - |
+      LAST_SHA=$(curl -s --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines?ref=$CI_COMMIT_REF_NAME&status=success&per_page=1" \
+        | jq -r '.[0].sha // empty')
+
+      if [ -n "$LAST_SHA" ]; then
+        FALLBACK_ARG="--fallback=$LAST_SHA"
+      else
+        echo "No previous successful pipeline, must build"
+        cp "apps/$APP/.gitlab/.gitlab-ci.deploy.yml" app-pipeline.yml
+        exit 0
+      fi
+
+      set +e
+      npx turbo-ignore "$APP" $FALLBACK_ARG
+      result=$?
+      set -e
+
+      if [ "$result" -eq 0 ]; then
+        echo "${APP} should be ignored..."
+        cp ".gitlab/ci/.gitlab-ci.noop.yml" app-pipeline.yml
+      else
+        cp "apps/$APP/.gitlab/.gitlab-ci.deploy.yml" app-pipeline.yml
+      fi
+  artifacts:
+    paths:
+      - app-pipeline.yml
+
+trigger_child:
+  stage: handover
+  variables:
+    ENVIRONMENT: $ENVIRONMENT
+  trigger:
+    include:
+      - artifact: app-pipeline.yml
+        job: check
+    strategy: depend

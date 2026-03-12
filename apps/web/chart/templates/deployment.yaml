@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ .Release.Name }}'
+  labels:
+    app: '{{ .Release.Name }}'
+  annotations:
+    app.gitlab.com/app: '{{ .Values.ci.projectPathSlug}}'
+    app.gitlab.com/env: '{{ .Values.ci.environmentSlug}}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: '{{ .Release.Name }}'
+  template:
+    metadata:
+      labels:
+        app: '{{ .Release.Name }}'
+      annotations:
+        app.gitlab.com/app: '{{ .Values.ci.projectPathSlug}}'
+        app.gitlab.com/env: '{{ .Values.ci.environmentSlug}}'
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: app
+          image: '{{ .Values.imageWithTag }}'
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-secrets
+          ports:
+            - containerPort: 3000
+              name: web
+              protocol: TCP
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '200m'
+            limits:
+              memory: '768Mi'
+              cpu: '600m'
