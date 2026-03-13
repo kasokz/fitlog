@@ -1,21 +1,21 @@
 # GSD State
 
-**Active Milestone:** None
+**Active Milestone:** M002 — M002
 **Active Slice:** None
-**Phase:** idle
+**Phase:** pre-planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
 ## Milestone Registry
-- ✅ **M001:** Core Training Engine — complete
-- ⬜ **M002:** Analytics & Progression Intelligence
-- ⬜ **M003:** Monetization & Premium Features
-- ⬜ **M004:** Cloud Sync & Platform
+- ✅ **M001:** Core Training Engine
+- 🔄 **M002:** M002
+- ⬜ **M003:** M003
+- ⬜ **M004:** M004
 
 ## Recent Decisions
-- D041: Zod refinement i18n approach — use m.*() calls directly in Zod .refine() message field
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-M001 complete. Next milestone: M002 (Analytics & Progression Intelligence).
+Plan milestone M002.
