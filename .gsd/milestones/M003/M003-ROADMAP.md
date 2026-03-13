@@ -75,7 +75,7 @@ This milestone is complete only when all are true:
 - [x] **S06: End-to-End Integration & Store Submission** `risk:medium` `depends:[S05]`
   > After this: The full purchase lifecycle is verified end-to-end on real devices — purchase, unlock, restart persistence, restore, subscription expiry. App is submitted to App Store Connect and Google Play Console. Fastlane deliver/supply pushes metadata to both stores.
 
-- [ ] **S07: i18n — New Keys for All Locales** `risk:low` `depends:[S03, S04]`
+- [x] **S07: i18n — New Keys for All Locales** `risk:low` `depends:[S03, S04]`
   > After this: All new UI text from S01-S04 (paywall, subscription management, premium templates, store descriptions) exists in both de.json and en.json with zero key drift. Estimated ~40-60 new keys per locale.
 
 ## Boundary Map

@@ -10,11 +10,12 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 
 ## Current State
 
-**M001 (Core Training Engine) and M002 (Analytics & Progression Intelligence) are complete.** The app has:
+**M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), and M003 (Monetization & Premium Features) are complete.** The app has:
 
-- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v5 with 8 tables + composite analytics index, repository pattern with Zod v4 validation, 354 unit tests passing
+- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v5 with 8 tables + composite analytics index, repository pattern with Zod v4 validation, 428 unit tests passing
 - **Exercise Library:** 55 curated exercises with search/filter by muscle group and equipment, custom exercise creation
 - **Program Management:** Normalized 4-table model (programs, training_days, exercise_assignments, mesocycles) with full CRUD
+- **Program Templates:** 8 total (3 free for onboarding + 5 premium behind template pack purchase), browsable via TemplateBrowserDrawer on Programs page
 - **Workout Logging:** Tap-tap-done UX with pre-fill from last session, stepper-based weight/reps, RIR per set (0-5+), set types (warmup/working/drop/failure), optional rest timer, duration timer
 - **Workout History:** Browsable session list with full detail views
 - **Body Weight Tracking:** One entry per date with partial unique index for soft-delete
@@ -26,7 +27,10 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **PR System:** Automatic detection on session completion with celebration toast + haptics, PR history page at /history/prs, per-exercise current bests via ExercisePRSection
 - **Progression Suggestions:** Non-intrusive banners during active workouts when RIR criteria met (>=2 sessions, avg RIR >=2), equipment-specific weight rounding
 - **Deload Automation:** Page-level deload banner and pre-fill weight reduction (~60%, rounded to 2.5kg) when mesocycle reaches deload week
-- **Freemium Gate:** Local feature-flag service via @capacitor/preferences. Free: Strength chart + Frequency + 30d range + top 3 PRs. Premium: full charts, extended history, progression suggestions. Ready for M003 IAP wiring.
+- **In-App Purchases:** @capgo/native-purchases with Capacitor 8 (StoreKit 2 + Play Billing 7.x). Annual/monthly subscription for analytics, one-time template pack. StoreKit testing config for sandbox
+- **Premium Service:** Granular product-tracking via PurchasedProduct map in Preferences. Feature-to-product mapping, subscription expiry checks, launch-time revalidation on mount + resume
+- **Paywall UX:** PaywallDrawer with dynamic store pricing, subscription terms, Apple-compliant cancellation instructions. UpgradePrompt on premium-gated features. Restore Purchases and Manage Subscription in Settings
+- **Store Submission:** Complete fastlane infrastructure (Fastfile, Appfile, Matchfile) for com.fitlog.app. 40+ metadata files for iOS/Android in de-DE + en-US. Screenshot frameit pipeline. 30-check pre-submission validation script. E2E verification runbook. Human-gated device testing and submission pending
 - **i18n:** 365 synchronized keys in German (base) and English via Paraglide
 - **Platform:** iOS and Android native projects scaffolded via Capacitor 8, builds to static output
 
@@ -41,7 +45,8 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **State:** Svelte 5 runes + runed utilities (Debounced, etc.)
 - **Data:** SQLite via @capgo/capacitor-fast-sql, thin repository pattern, Zod v4 validation, schema_version migration tracking (currently v5)
 - **Analytics:** Pure-function services in `src/lib/services/analytics/`, AnalyticsRepository for filtered queries, dashboardData.ts intermediary for chart-ready data
-- **Premium:** Local feature-flag service via @capacitor/preferences, page-level gate enforcement before data loading
+- **IAP:** @capgo/native-purchases via PurchasePlugin wrapper (catch-and-return safe defaults, never throws)
+- **Premium:** Granular product-tracking service via @capacitor/preferences (PurchasedProduct JSON map), feature-to-product mapping, page-level gate enforcement before data loading, revalidation on mount + resume
 - **Icons:** @lucide/svelte
 - **Haptics:** @capacitor/haptics (fire-and-forget service with web fallback)
 - **Navigation:** Bottom tab bar (Programs, Exercises, History, Body Weight, Settings). Analytics at /history/analytics, PRs at /history/prs (sub-routes of History tab)
@@ -55,5 +60,5 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 - [x] M001: Core Training Engine — Workout logging, exercise library, programs, mesocycles, offline SQLite, onboarding, striking UI, iOS + Android builds, i18n (de/en)
 - [x] M002: Analytics & Progression Intelligence — Strength curves, 1RM estimation, PR tracking, volume trends, RIR-driven progression suggestions, deload automation, freemium gate, i18n (de/en)
-- [ ] M003: Monetization & Premium Features — IAP/subscription infra (S01 done), purchase state management (S02 done), paywall UX (S03 done), premium templates (S04 done), store listing optimization (S05 done), end-to-end integration + submission (S06 done), i18n key sync (S07) remaining
+- [x] M003: Monetization & Premium Features — IAP/subscription infra, purchase state management, paywall UX, premium templates, store listing optimization, end-to-end integration + store submission, i18n key sync. All 7 slices complete.
 - [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export
