@@ -1,4 +1,4 @@
--- FitLog database schema v4
+-- FitLog database schema v5
 
 -- Migration tracking
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS workout_sets (
 
 CREATE INDEX IF NOT EXISTS idx_workout_sets_session_id ON workout_sets(session_id);
 CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_completed ON workout_sets(exercise_id, set_type, completed) WHERE deleted_at IS NULL;
 
 -- Body Weight Entries
 CREATE TABLE IF NOT EXISTS body_weight_entries (

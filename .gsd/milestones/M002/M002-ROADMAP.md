@@ -55,7 +55,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Analytics Computation Engine & Schema** `risk:high` `depends:[]`
+- [x] **S01: Analytics Computation Engine & Schema** `risk:high` `depends:[]`
   > After this: Unit tests prove correct 1RM estimation (Epley/Brzycki, capped at 10 reps), PR detection across 3 categories (weight/rep/e1RM), volume/tonnage aggregation per exercise and muscle group, RIR progression suggestion algorithm with configurable thresholds, and deload weight reduction calculation — all tested against realistic multi-session SQLite data via sql.js.
 
 - [ ] **S02: Progress Dashboard with Interactive Charts** `risk:medium` `depends:[S01]`
