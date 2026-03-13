@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M001 — Core Training Engine
-**Active Slice:** S05 — Onboarding & Program Templates
+**Active Slice:** S06 — Design Polish & Platform Builds
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S05 (Onboarding & Program Templates).
+Plan slice S06 (Design Polish & Platform Builds).

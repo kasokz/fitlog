@@ -93,6 +93,18 @@ export const ExerciseRepository = {
 	},
 
 	/**
+	 * Get a single exercise by exact name match. Returns null if not found or soft-deleted.
+	 * Uses exact equality (not LIKE) to avoid false positives like "Curl" matching "Barbell Curl".
+	 */
+	async getByName(name: string): Promise<Exercise | null> {
+		const rows = await dbQuery<ExerciseRow>(
+			'SELECT * FROM exercises WHERE name = ? AND deleted_at IS NULL LIMIT 1',
+			[name]
+		);
+		return rows.length > 0 ? rowToExercise(rows[0]) : null;
+	},
+
+	/**
 	 * Search exercises by name (case-insensitive LIKE). Excludes soft-deleted.
 	 */
 	async search(query: string): Promise<Exercise[]> {

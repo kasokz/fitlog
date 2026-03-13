@@ -213,5 +213,20 @@
 	"nav_history": "Workout History",
 	"nav_bodyweight": "Body Weight",
 	"nav_exercises": "Exercises",
-	"nav_programs": "Programs"
+	"nav_programs": "Programs",
+	"onboarding_title": "Choose Your Training Program",
+	"onboarding_description": "Start with a proven program or create your own later.",
+	"onboarding_template_ppl_name": "Push / Pull / Legs",
+	"onboarding_template_ppl_description": "6-day split for push, pull, and leg movements, twice per week. Ideal for advanced lifters seeking high volume.",
+	"onboarding_template_upper_lower_name": "Upper / Lower Body",
+	"onboarding_template_upper_lower_description": "4-day split alternating upper and lower body sessions. A balanced approach for beginners to intermediate lifters.",
+	"onboarding_template_full_body_name": "Full Body",
+	"onboarding_template_full_body_description": "3-day full body program hitting all major muscle groups each session. Ideal for beginners or those with limited training days.",
+	"onboarding_template_days_count": "{count} training days",
+	"onboarding_creating": "Creating program...",
+	"onboarding_creating_description": "Your training program is being set up.",
+	"onboarding_success": "Program created successfully!",
+	"onboarding_error": "Failed to create program",
+	"onboarding_skip": "Skip",
+	"onboarding_skip_description": "You can always create a program later."
 }

@@ -213,5 +213,20 @@
 	"nav_history": "Trainingsverlauf",
 	"nav_bodyweight": "Körpergewicht",
 	"nav_exercises": "Übungen",
-	"nav_programs": "Programme"
+	"nav_programs": "Programme",
+	"onboarding_title": "Wähle dein Trainingsprogramm",
+	"onboarding_description": "Starte mit einem bewährten Programm oder erstelle später dein eigenes.",
+	"onboarding_template_ppl_name": "Push / Pull / Legs",
+	"onboarding_template_ppl_description": "6-Tage-Split für Push-, Pull- und Beinbewegungen, zweimal pro Woche. Ideal für fortgeschrittene Trainierende mit hohem Volumen.",
+	"onboarding_template_upper_lower_name": "Oberkörper / Unterkörper",
+	"onboarding_template_upper_lower_description": "4-Tage-Split mit abwechselnden Ober- und Unterkörpereinheiten. Ausgewogener Ansatz für Anfänger bis Fortgeschrittene.",
+	"onboarding_template_full_body_name": "Ganzkörper",
+	"onboarding_template_full_body_description": "3-Tage-Ganzkörperprogramm, das alle grossen Muskelgruppen pro Einheit trainiert. Ideal für Anfänger oder bei wenigen Trainingstagen.",
+	"onboarding_template_days_count": "{count} Trainingstage",
+	"onboarding_creating": "Programm wird erstellt...",
+	"onboarding_creating_description": "Dein Trainingsprogramm wird vorbereitet.",
+	"onboarding_success": "Programm erfolgreich erstellt!",
+	"onboarding_error": "Fehler beim Erstellen des Programms",
+	"onboarding_skip": "Überspringen",
+	"onboarding_skip_description": "Du kannst später jederzeit ein Programm erstellen."
 }
