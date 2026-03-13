@@ -61,7 +61,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Progress Dashboard with Interactive Charts** `risk:medium` `depends:[S01]`
   > After this: A user can navigate to the progress dashboard, see interactive strength curves (1RM over time per exercise), volume/tonnage trend charts (bar/area), body weight chart, and training frequency summary — all rendered with LayerChart using real data from the analytics engine. Exercise picker and time-range selector control what's displayed.
 
-- [ ] **S03: PR Detection, Celebration & History** `risk:medium` `depends:[S01]`
+- [x] **S03: PR Detection, Celebration & History** `risk:medium` `depends:[S01]`
   > After this: When a user completes a workout session, PRs are automatically detected and a celebration toast with haptic feedback shows the achievement. A dedicated PR history view shows all personal records per exercise with dates and values. PRs are visible from the exercise detail screen.
 
 - [ ] **S04: RIR Progression Suggestions in Workout** `risk:medium` `depends:[S01]`

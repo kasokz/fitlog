@@ -2,12 +2,14 @@
 	import { Badge } from '@repo/ui/components/ui/badge';
 	import * as Drawer from '@repo/ui/components/ui/drawer';
 	import { Button } from '@repo/ui/components/ui/button';
+	import { Separator } from '@repo/ui/components/ui/separator';
 	import { Pencil } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
 	import type { Exercise } from '$lib/types/exercise.js';
 
 	import { getEquipmentLabel, getMuscleGroupLabel } from './i18n-maps.js';
+	import ExercisePRSection from './ExercisePRSection.svelte';
 
 	interface Props {
 		exercise: Exercise | null;
@@ -72,6 +74,10 @@
 							: m.exercises_detail_type_isolation()}
 					</Badge>
 				</div>
+
+				<!-- Personal Records -->
+				<Separator />
+				<ExercisePRSection exerciseId={exercise.id} />
 			</div>
 
 			<Drawer.Footer>

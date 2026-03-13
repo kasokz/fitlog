@@ -9,7 +9,9 @@
 	import { Button } from '@repo/ui/components/ui/button';
 	import { ArrowLeft, Loader2, SearchX, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
 
-	import { notifySuccess } from '$lib/services/haptics.js';
+	import { notifySuccess, impactHeavy } from '$lib/services/haptics.js';
+	import { detectSessionPRs, type ExerciseGroup as PRExerciseGroup } from '$lib/services/analytics/sessionPRDetector.js';
+	import PRCelebrationToast from '$lib/components/workout/PRCelebrationToast.svelte';
 	import { getDb } from '$lib/db/database.js';
 	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
 	import { ProgramRepository } from '$lib/db/repositories/program.js';
@@ -272,12 +274,57 @@
 				durationSeconds
 			});
 
-			notifySuccess();
+			// PR detection — runs after completion, never blocks navigation
+			let hasPRs = false;
+			try {
+				const mappedGroups: PRExerciseGroup[] = exerciseGroups.map((g) => ({
+					exerciseId: g.exerciseId,
+					exerciseName: g.exerciseName,
+					sets: g.sets
+						.filter((s) => s.completed)
+						.map((s) => ({
+							id: s.id,
+							session_id: sessionId,
+							exercise_id: s.exercise_id,
+							assignment_id: s.assignment_id,
+							set_number: s.set_number,
+							set_type: s.set_type,
+							weight: s.weight,
+							reps: s.reps,
+							rir: s.rir,
+							completed: s.completed,
+							rest_seconds: null,
+							created_at: session!.started_at,
+							updated_at: session!.started_at,
+							deleted_at: null
+						}))
+				}));
+
+				const prResult = await detectSessionPRs(sessionId, mappedGroups);
+
+				if (prResult.prs.length > 0) {
+					hasPRs = true;
+					impactHeavy();
+					toast.custom(PRCelebrationToast, {
+						componentProps: { prs: prResult.prs },
+						duration: 6000
+					});
+				}
+			} catch (prError) {
+				console.warn('[Workout] PR detection failed, falling through to normal toast', {
+					sessionId,
+					error: prError instanceof Error ? prError.message : String(prError)
+				});
+			}
+
+			if (!hasPRs) {
+				notifySuccess();
+				toast.success(m.workout_finish_success());
+			}
 
 			finishDialogOpen = false;
-			toast.success(m.workout_finish_success());
 
-			// Navigate back to program detail
+			// Navigate back to program detail — Toaster persists across routes
 			if (programId) {
 				goto(`/programs/${programId}`);
 			} else {
