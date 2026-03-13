@@ -2,7 +2,7 @@
 
 ## What This Is
 
-FitLog is a fitness tracking mobile app focused on progressive overload management. Built as a Capacitor 8 hybrid app (SvelteKit + Svelte 5) targeting iOS and Android simultaneously. The app lets users create structured training programs with mesocycles, log workouts with a minimal tap-tap-done UX, track RIR (Reps in Reserve) per set, review workout history, track body weight, and now see analytics-driven progression intelligence. Offline-first with a sync-ready data model (UUID PKs, timestamps, soft-delete) for future cloud sync.
+FitLog is a fitness tracking mobile app focused on progressive overload management. Built as a Capacitor 8 hybrid app (SvelteKit + Svelte 5) targeting iOS and Android simultaneously. The app lets users create structured training programs with mesocycles, log workouts with a minimal tap-tap-done UX, track RIR (Reps in Reserve) per set, review workout history, track body weight, and see analytics-driven progression intelligence. Cloud-connected with user accounts, cross-device sync, and data export. Offline-first with SQLite + custom REST sync protocol (UUID PKs, timestamps, soft-delete, LWW conflict resolution).
 
 ## Core Value
 
@@ -10,9 +10,9 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 
 ## Current State
 
-**M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), and M003 (Monetization & Premium Features) are complete.** The app has:
+**M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), M003 (Monetization & Premium Features), and M004 (Cloud Sync & Platform) are complete.** The app has:
 
-- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v6 with 8 tables + composite analytics index + deterministic seed exercise UUIDs, repository pattern with Zod v4 validation, 483 mobile + 26 web unit tests passing
+- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v6 with 8 tables + composite analytics index + deterministic seed exercise UUIDs, repository pattern with Zod v4 validation, 524 mobile + 26 web unit tests passing
 - **Exercise Library:** 55 curated exercises with search/filter by muscle group and equipment, custom exercise creation
 - **Program Management:** Normalized 4-table model (programs, training_days, exercise_assignments, mesocycles) with full CRUD
 - **Program Templates:** 8 total (3 free for onboarding + 5 premium behind template pack purchase), browsable via TemplateBrowserDrawer on Programs page
@@ -31,7 +31,8 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **Premium Service:** Granular product-tracking via PurchasedProduct map in Preferences. Feature-to-product mapping, subscription expiry checks, launch-time revalidation on mount + resume
 - **Paywall UX:** PaywallDrawer with dynamic store pricing, subscription terms, Apple-compliant cancellation instructions. UpgradePrompt on premium-gated features. Restore Purchases and Manage Subscription in Settings
 - **Store Submission:** Complete fastlane infrastructure (Fastfile, Appfile, Matchfile) for com.fitlog.app. 40+ metadata files for iOS/Android in de-DE + en-US. Screenshot frameit pipeline. 30-check pre-submission validation script. E2E verification runbook. Human-gated device testing and submission pending
-- **Cloud Sync:** Two-way sync protocol (push/pull with LWW per row) between mobile SQLite and server Postgres. Automatic sync on sign-in (full), resume, and connectivity restore. Deterministic UUID v5 for seed exercises. Schema v6 migration re-IDs existing data. Observable sync state (getSyncState/clearSyncState/triggerSync) with SyncStatusSection UI in Settings showing last sync time, error alerts, and manual sync trigger.
+- **Cloud Sync:** SvelteKit API server with Better Auth (email/password + JWT + Bearer) + Drizzle ORM + Postgres (13-table schema). Two-way sync protocol (push/pull with LWW per row) between mobile SQLite and server Postgres. Automatic sync on sign-in (full), resume, and connectivity restore. Deterministic UUID v5 for seed exercises. Schema v6 migration re-IDs existing data. Observable sync state (getSyncState/clearSyncState/triggerSync) with SyncStatusSection UI in Settings showing last sync time, error alerts, and manual sync trigger. Mobile auth service with Bearer token persistence. Sign-up/sign-in/sign-out screens.
+- **Data Export:** CSV (denormalized workout log + body weight) and JSON (full structured data) export from Settings with native share sheet integration via Capacitor Filesystem + Share plugins.
 - **i18n:** 410 synchronized keys in German (base) and English via Paraglide
 - **Platform:** iOS and Android native projects scaffolded via Capacitor 8, builds to static output
 
@@ -44,7 +45,10 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **Forms:** sveltekit-superforms (SPA mode) + zod4 + formsnap (for structured forms, not per-set workout editing)
 - **i18n:** Paraglide (base locale: de, detection: localStorage → preferredLanguage → baseLocale)
 - **State:** Svelte 5 runes + runed utilities (Debounced, etc.)
-- **Data:** SQLite via @capgo/capacitor-fast-sql, thin repository pattern, Zod v4 validation, schema_version migration tracking (currently v5)
+- **Data:** SQLite via @capgo/capacitor-fast-sql, thin repository pattern, Zod v4 validation, schema_version migration tracking (currently v6)
+- **Sync:** Custom REST push/pull protocol with LWW per row, server timestamps as high-water marks, @capacitor/network for connectivity detection
+- **Auth:** Better Auth (JWT + Bearer plugins) via raw fetch from mobile, Bearer token in Preferences
+- **API Server:** SvelteKit (adapter-node) with Drizzle ORM + Postgres, AppError + resolveError error handling
 - **Analytics:** Pure-function services in `src/lib/services/analytics/`, AnalyticsRepository for filtered queries, dashboardData.ts intermediary for chart-ready data
 - **IAP:** @capgo/native-purchases via PurchasePlugin wrapper (catch-and-return safe defaults, never throws)
 - **Premium:** Granular product-tracking service via @capacitor/preferences (PurchasedProduct JSON map), feature-to-product mapping, page-level gate enforcement before data loading, revalidation on mount + resume
@@ -62,4 +66,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M001: Core Training Engine — Workout logging, exercise library, programs, mesocycles, offline SQLite, onboarding, striking UI, iOS + Android builds, i18n (de/en)
 - [x] M002: Analytics & Progression Intelligence — Strength curves, 1RM estimation, PR tracking, volume trends, RIR-driven progression suggestions, deload automation, freemium gate, i18n (de/en)
 - [x] M003: Monetization & Premium Features — IAP/subscription infra, purchase state management, paywall UX, premium templates, store listing optimization, end-to-end integration + store submission, i18n key sync. All 7 slices complete.
-- [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export. **All 5 slices (S01–S05) complete.** SvelteKit API with Better Auth + Drizzle + Postgres, mobile auth service, sign-up/sign-in UI, two-way sync protocol (push/pull with LWW), deterministic seed exercise UUIDs (schema v6), automatic sync triggers, CSV/JSON data export with native share sheet, sync status UI with observable state + manual sync trigger + error surfacing + sign-out cleanup, i18n verified (410 keys in de+en with zero drift).
+- [x] M004: Cloud Sync & Platform — Account system (Better Auth JWT/Bearer), cross-device sync (custom REST push/pull with LWW), deterministic seed exercise UUIDs, CSV/JSON data export, sync status UI, backup/restore via sync. 5 slices complete. 524 mobile + 26 web tests passing. 410 i18n keys (de+en, zero drift).
