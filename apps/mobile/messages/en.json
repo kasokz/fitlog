@@ -328,5 +328,6 @@
   "settings_iap_no_products": "No products loaded",
   "settings_iap_transaction_success": "Transaction complete: {id}",
   "settings_iap_transaction_error": "Purchase failed: {error}",
-  "settings_iap_restored_count": "{count} purchases restored"
+  "settings_iap_restored_count": "{count} purchases restored",
+  "premium_upgrade_description_premium_templates": "Unlock professional training templates based on proven methodologies."
 }

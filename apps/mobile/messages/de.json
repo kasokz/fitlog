@@ -328,5 +328,6 @@
   "settings_iap_no_products": "Keine Produkte geladen",
   "settings_iap_transaction_success": "Transaktion abgeschlossen: {id}",
   "settings_iap_transaction_error": "Kauf fehlgeschlagen: {error}",
-  "settings_iap_restored_count": "{count} Käufe wiederhergestellt"
+  "settings_iap_restored_count": "{count} Käufe wiederhergestellt",
+  "premium_upgrade_description_premium_templates": "Schalte professionelle Trainingsvorlagen frei, die auf bewährten Methoden basieren."
 }

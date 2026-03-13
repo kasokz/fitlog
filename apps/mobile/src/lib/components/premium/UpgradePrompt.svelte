@@ -6,16 +6,21 @@
 
 	interface Props {
 		/** Feature context key used to select the appropriate description message */
-		feature: 'full_charts' | 'extended_history';
+		feature: 'full_charts' | 'extended_history' | 'premium_templates';
 	}
 
 	const { feature }: Props = $props();
 
-	const description = $derived(
-		feature === 'full_charts'
-			? m.premium_upgrade_description_full_charts()
-			: m.premium_upgrade_description_extended_history()
-	);
+	const description = $derived.by(() => {
+		switch (feature) {
+			case 'full_charts':
+				return m.premium_upgrade_description_full_charts();
+			case 'extended_history':
+				return m.premium_upgrade_description_extended_history();
+			case 'premium_templates':
+				return m.premium_upgrade_description_premium_templates();
+		}
+	});
 
 	function handleUpgrade() {
 		console.log(`[Premium] Upgrade tapped — feature: ${feature} (coming soon)`);

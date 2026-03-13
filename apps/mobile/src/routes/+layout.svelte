@@ -4,9 +4,11 @@
 	import { Toaster } from '@repo/ui/components/ui/sonner';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 
 	import { isOnboardingCompleted } from '$lib/services/onboarding.js';
+	import { revalidatePurchases } from '$lib/services/premium.js';
+	import { App } from '@capacitor/app';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
@@ -31,9 +33,20 @@
 					console.error('[Onboarding] Guard check failed:', err);
 				} finally {
 					ready = true;
+					// Fire-and-forget: revalidate purchases on mount after app is ready
+					revalidatePurchases().catch(() => {});
 				}
 			})();
 		});
+	});
+
+	// Revalidate purchases when app resumes from background
+	const resumeHandle = App.addListener('resume', () => {
+		revalidatePurchases().catch(() => {});
+	});
+
+	onDestroy(() => {
+		resumeHandle.then((handle) => handle.remove());
 	});
 </script>
 

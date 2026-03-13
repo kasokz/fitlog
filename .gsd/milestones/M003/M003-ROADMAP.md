@@ -60,7 +60,7 @@ This milestone is complete only when all are true:
 - [x] **S01: IAP Plugin Integration & First Purchase Flow** `risk:high` `depends:[]`
   > After this: A developer can trigger a real StoreKit sandbox purchase from within the app, see the native purchase dialog, and observe transaction completion logged to console. The `@capgo/native-purchases` plugin is proven working with Capacitor 8.
 
-- [ ] **S02: Purchase State Management & Premium Gate Wiring** `risk:medium` `depends:[S01]`
+- [x] **S02: Purchase State Management & Premium Gate Wiring** `risk:medium` `depends:[S01]`
   > After this: Completing a sandbox purchase unlocks premium features (analytics tabs, progression suggestions, full PR history). The premium service tracks granular product purchases (subscription vs template packs) instead of a single boolean. Purchase state persists across app restart and is revalidated on launch.
 
 - [ ] **S03: Paywall UX & Upgrade Flows** `risk:medium` `depends:[S02]`
