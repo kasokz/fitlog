@@ -317,5 +317,16 @@
   "workout_start_error": "Failed to start workout",
   "workout_stepper_decrease": "Decrease",
   "workout_stepper_increase": "Increase",
-  "workout_weight": "Weight"
+  "workout_weight": "Weight",
+  "settings_iap_test_label": "IAP Testing",
+  "settings_iap_billing_supported": "Billing Supported",
+  "settings_iap_billing_not_supported": "Not supported (web)",
+  "settings_iap_billing_checking": "Checking...",
+  "settings_iap_load_products": "Load Products",
+  "settings_iap_purchase_annual": "Purchase Annual",
+  "settings_iap_restore": "Restore Purchases",
+  "settings_iap_no_products": "No products loaded",
+  "settings_iap_transaction_success": "Transaction complete: {id}",
+  "settings_iap_transaction_error": "Purchase failed: {error}",
+  "settings_iap_restored_count": "{count} purchases restored"
 }

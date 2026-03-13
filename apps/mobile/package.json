@@ -29,6 +29,7 @@
 		"@capgo/capacitor-fast-sql": "^8.0.23",
 		"@capgo/capacitor-updater": "^8.43.9",
 		"@capgo/cli": "^7.84.5",
+		"@capgo/native-purchases": "8.2.2",
 		"@inlang/paraglide-js": "^2.6.0",
 		"@lucide/svelte": "^0.562.0",
 		"@repo/ui": "workspace:*",

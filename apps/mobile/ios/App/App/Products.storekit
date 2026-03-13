@@ -1,0 +1,133 @@
+{
+  "identifier" : "5A8B7C9D-E0F1-4A2B-3C4D-5E6F7A8B9C0D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "F1A2B3C4-D5E6-7F89-0A1B-2C3D4E5F6A7B",
+      "localizations" : [
+        {
+          "description" : "Zusätzliche Trainingsvorlagen für dein Workout",
+          "displayName" : "Vorlagen-Paket",
+          "locale" : "de"
+        },
+        {
+          "description" : "Additional workout templates for your training",
+          "displayName" : "Templates Pack",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "com.fitlog.app.templates.pack",
+      "referenceName" : "Templates Pack",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "1234567890",
+    "_developerTeamID" : "ABCDE12345",
+    "_failTransactionsEnabled" : false,
+    "_lastInitializedDate" : null,
+    "_locale" : "en",
+    "_storefront" : "DEU",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "setting" : "expires"
+      },
+      {
+        "current" : null,
+        "setting" : "purchase"
+      },
+      {
+        "current" : null,
+        "setting" : "renewal"
+      },
+      {
+        "current" : null,
+        "setting" : "signature"
+      },
+      {
+        "current" : null,
+        "setting" : "verification"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+      "localizations" : [
+
+      ],
+      "name" : "Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "29.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A2B3C4D5-E6F7-8901-ABCD-EF2345678901",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Voller Zugriff auf alle Premium-Funktionen für ein ganzes Jahr",
+              "displayName" : "Premium Jahresabo",
+              "locale" : "de"
+            },
+            {
+              "description" : "Full access to all premium features for one year",
+              "displayName" : "Premium Annual",
+              "locale" : "en"
+            }
+          ],
+          "productID" : "com.fitlog.app.premium.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Premium Annual",
+          "subscriptionGroupID" : "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "B3C4D5E6-F789-0123-ABCD-EF3456789012",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Voller Zugriff auf alle Premium-Funktionen",
+              "displayName" : "Premium Monatsabo",
+              "locale" : "de"
+            },
+            {
+              "description" : "Full access to all premium features",
+              "displayName" : "Premium Monthly",
+              "locale" : "en"
+            }
+          ],
+          "productID" : "com.fitlog.app.premium.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Premium Monthly",
+          "subscriptionGroupID" : "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

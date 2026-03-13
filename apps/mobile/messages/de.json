@@ -317,5 +317,16 @@
   "premium_upgrade_coming_soon": "Demnächst verfügbar",
   "settings_premium_dev_label": "Premium (Dev)",
   "settings_premium_active": "Aktiv",
-  "settings_premium_inactive": "Inaktiv"
+  "settings_premium_inactive": "Inaktiv",
+  "settings_iap_test_label": "IAP-Test",
+  "settings_iap_billing_supported": "Billing verfügbar",
+  "settings_iap_billing_not_supported": "Nicht unterstützt (Web)",
+  "settings_iap_billing_checking": "Wird geprüft...",
+  "settings_iap_load_products": "Produkte laden",
+  "settings_iap_purchase_annual": "Jahresabo kaufen",
+  "settings_iap_restore": "Käufe wiederherstellen",
+  "settings_iap_no_products": "Keine Produkte geladen",
+  "settings_iap_transaction_success": "Transaktion abgeschlossen: {id}",
+  "settings_iap_transaction_error": "Kauf fehlgeschlagen: {error}",
+  "settings_iap_restored_count": "{count} Käufe wiederhergestellt"
 }

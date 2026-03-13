@@ -4,10 +4,27 @@
 	import { userPrefersMode, setMode } from 'mode-watcher';
 	import * as ToggleGroup from '@repo/ui/components/ui/toggle-group';
 	import { Switch } from '@repo/ui/components/ui/switch';
+	import { Button } from '@repo/ui/components/ui/button';
 	import { Sun, Moon, Monitor, Globe } from '@lucide/svelte';
 	import { isPremiumUser, setPremiumStatus } from '$lib/services/premium.js';
+	import {
+		isBillingSupported,
+		getProducts,
+		purchaseProduct,
+		restorePurchases,
+		PRODUCT_IDS,
+		PLAN_IDS,
+		PURCHASE_TYPE,
+	} from '$lib/services/purchase-plugin.js';
+	import type { Product } from '$lib/services/purchase-plugin.js';
 
 	let premiumActive = $state(false);
+
+	// IAP test state (dev only, but declared unconditionally for simplicity)
+	let billingSupported: boolean | null = $state(null);
+	let products: Product[] = $state([]);
+	let lastResult: { message: string; success: boolean } | null = $state(null);
+	let loading = $state(false);
 
 	$effect(() => {
 		isPremiumUser().then((status) => {
@@ -15,9 +32,93 @@
 		});
 	});
 
+	$effect(() => {
+		if (import.meta.env.DEV) {
+			isBillingSupported().then((supported) => {
+				billingSupported = supported;
+			});
+		}
+	});
+
 	async function handlePremiumToggle(checked: boolean) {
 		premiumActive = checked;
 		await setPremiumStatus(checked);
+	}
+
+	async function handleLoadProducts() {
+		loading = true;
+		lastResult = null;
+		try {
+			const subs = await getProducts({
+				productIds: [PRODUCT_IDS.PREMIUM_ANNUAL, PRODUCT_IDS.PREMIUM_MONTHLY],
+				productType: PURCHASE_TYPE.SUBS,
+			});
+			const inapp = await getProducts({
+				productIds: [PRODUCT_IDS.TEMPLATE_PACK],
+				productType: PURCHASE_TYPE.INAPP,
+			});
+			products = [...subs, ...inapp];
+			lastResult = {
+				message: `${products.length} product(s) loaded`,
+				success: true,
+			};
+		} catch (error) {
+			lastResult = {
+				message: m.settings_iap_transaction_error({ error: String(error) }),
+				success: false,
+			};
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handlePurchaseAnnual() {
+		loading = true;
+		lastResult = null;
+		try {
+			const transaction = await purchaseProduct({
+				productId: PRODUCT_IDS.PREMIUM_ANNUAL,
+				productType: PURCHASE_TYPE.SUBS,
+				planIdentifier: PLAN_IDS.ANNUAL,
+			});
+			if (transaction) {
+				lastResult = {
+					message: m.settings_iap_transaction_success({ id: transaction.transactionIdentifier }),
+					success: true,
+				};
+			} else {
+				lastResult = {
+					message: m.settings_iap_transaction_error({ error: 'No transaction returned' }),
+					success: false,
+				};
+			}
+		} catch (error) {
+			lastResult = {
+				message: m.settings_iap_transaction_error({ error: String(error) }),
+				success: false,
+			};
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleRestorePurchases() {
+		loading = true;
+		lastResult = null;
+		try {
+			const restored = await restorePurchases();
+			lastResult = {
+				message: m.settings_iap_restored_count({ count: restored.length }),
+				success: true,
+			};
+		} catch (error) {
+			lastResult = {
+				message: m.settings_iap_transaction_error({ error: String(error) }),
+				success: false,
+			};
+		} finally {
+			loading = false;
+		}
 	}
 
 	function handleModeChange(value: string | undefined) {
@@ -98,6 +199,72 @@
 					onCheckedChange={handlePremiumToggle}
 				/>
 			</div>
+		</div>
+
+		<!-- IAP Testing (dev mode only) -->
+		<div class="space-y-3 mt-6">
+			<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.settings_iap_test_label()}</h2>
+
+			<!-- Billing status -->
+			<div class="flex items-center justify-between rounded-md border px-4 py-3">
+				<span class="text-sm font-medium">{m.settings_iap_billing_supported()}</span>
+				{#if billingSupported === null}
+					<span class="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{m.settings_iap_billing_checking()}</span>
+				{:else if billingSupported}
+					<span class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-900 dark:text-green-200">Supported</span>
+				{:else}
+					<span class="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800 dark:bg-red-900 dark:text-red-200">{m.settings_iap_billing_not_supported()}</span>
+				{/if}
+			</div>
+
+			<!-- Action buttons -->
+			<div class="flex flex-col gap-2">
+				<Button
+					variant="outline"
+					class="w-full justify-center"
+					disabled={loading || !billingSupported}
+					onclick={handleLoadProducts}
+				>
+					{m.settings_iap_load_products()}
+				</Button>
+				<Button
+					variant="outline"
+					class="w-full justify-center"
+					disabled={loading || !billingSupported}
+					onclick={handlePurchaseAnnual}
+				>
+					{m.settings_iap_purchase_annual()}
+				</Button>
+				<Button
+					variant="outline"
+					class="w-full justify-center"
+					disabled={loading || !billingSupported}
+					onclick={handleRestorePurchases}
+				>
+					{m.settings_iap_restore()}
+				</Button>
+			</div>
+
+			<!-- Product list -->
+			{#if products.length > 0}
+				<div class="space-y-1 rounded-md border px-4 py-3">
+					{#each products as product}
+						<div class="flex items-center justify-between text-sm">
+							<span class="font-medium">{product.title}</span>
+							<span class="text-muted-foreground">{product.price} — <code class="text-xs">{product.identifier}</code></span>
+						</div>
+					{/each}
+				</div>
+			{:else if billingSupported !== null}
+				<p class="text-xs text-muted-foreground">{m.settings_iap_no_products()}</p>
+			{/if}
+
+			<!-- Result display -->
+			{#if lastResult}
+				<div class="rounded-md border px-4 py-3 text-sm {lastResult.success ? 'border-green-500 text-green-700 dark:text-green-300' : 'border-red-500 text-red-700 dark:text-red-300'}">
+					{lastResult.message}
+				</div>
+			{/if}
 		</div>
 	{/if}
 </section>

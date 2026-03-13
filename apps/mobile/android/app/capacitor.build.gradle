@@ -17,6 +17,7 @@ dependencies {
     implementation project(':capacitor-splash-screen')
     implementation project(':capgo-capacitor-fast-sql')
     implementation project(':capgo-capacitor-updater')
+    implementation project(':capgo-native-purchases')
 
 }
 

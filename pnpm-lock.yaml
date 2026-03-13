@@ -90,6 +90,9 @@ importers:
       '@capgo/cli':
         specifier: ^7.84.5
         version: 7.84.8
+      '@capgo/native-purchases':
+        specifier: 8.2.2
+        version: 8.2.2(@capacitor/core@8.2.0)
       '@inlang/paraglide-js':
         specifier: ^2.6.0
         version: 2.14.0
@@ -415,6 +418,11 @@ packages:
     resolution: {integrity: sha512-tLx8WxPsXDWBNv1BFogI4R24dq/8BU/KP1uXiUOfstRUWsOyii4jTyWeJqc8akrwi+cEaEinXkqkWkBQdCBIXQ==}
     engines: {node: '>=20.0.0', npm: '>=8.0.0'}
     hasBin: true
+
+  '@capgo/native-purchases@8.2.2':
+    resolution: {integrity: sha512-Di8C2JV/zpN+pWdO1EwuFoqTV+9BiUdNen7roTV7iaQ+uwntw5HgbTCAJHczilYMydrENws3FyqDlxNDi7AmUw==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -4292,6 +4300,10 @@ snapshots:
       '@capacitor/core': 8.2.0
 
   '@capgo/cli@7.84.8': {}
+
+  '@capgo/native-purchases@8.2.2(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
