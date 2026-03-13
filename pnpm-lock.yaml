@@ -38,6 +38,9 @@ importers:
       '@capacitor/share':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.2.0)
+      '@capgo/capacitor-social-login':
+        specifier: ^8.3.9
+        version: 8.3.9(@capacitor/core@8.2.0)
       '@dnd-kit/dom':
         specifier: ^0.3.2
         version: 0.3.2
@@ -701,6 +704,11 @@ packages:
 
   '@capgo/capacitor-fast-sql@8.0.23':
     resolution: {integrity: sha512-rNGjGt8czmchmDQa4PCjP/RURwECcqoGpLFdX3pOhCZgst23H1Nmv5rZnlmperGnuAhHjFB8fDwMKljswk44yQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-social-login@8.3.9':
+    resolution: {integrity: sha512-JhLf24vk1BlUsMLSTWgv0ebJTtN9JS6pxM4YfaaX5nEldJWWb6qirbJwr32t4rCSbM4iyA6KqWYxfH6u2T9Gwg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -6051,6 +6059,10 @@ snapshots:
   '@capacitor/synapse@1.0.4': {}
 
   '@capgo/capacitor-fast-sql@8.0.23(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
+
+  '@capgo/capacitor-social-login@8.3.9(@capacitor/core@8.2.0)':
     dependencies:
       '@capacitor/core': 8.2.0
 

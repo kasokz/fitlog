@@ -14,6 +14,9 @@ const config: CapacitorConfig = {
 			// Configure your OTA update server URLs here
 			// updateUrl: 'https://ota.example.com/updates',
 			// statsUrl: 'https://ota.example.com/stats'
+		},
+		SocialLogin: {
+			// Runtime initialization via initializeSocialLogin() — no static config needed
 		}
 	}
 };

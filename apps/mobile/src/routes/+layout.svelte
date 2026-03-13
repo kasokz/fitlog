@@ -9,6 +9,7 @@
 	import { isOnboardingCompleted } from '$lib/services/onboarding.js';
 	import { revalidatePurchases } from '$lib/services/premium.js';
 	import { incrementalSync } from '$lib/services/sync.js';
+	import { initializeSocialLogin } from '$lib/services/social-login-plugin.js';
 	import { App } from '@capacitor/app';
 	import { Network } from '@capacitor/network';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -38,6 +39,8 @@
 					console.error('[Onboarding] Guard check failed:', err);
 				} finally {
 					ready = true;
+					// Fire-and-forget: initialize social login plugin
+					initializeSocialLogin('GOOGLE_WEB_CLIENT_ID').catch(() => {});
 					// Fire-and-forget: revalidate purchases on mount after app is ready
 					revalidatePurchases().catch(() => {});
 					// Fire-and-forget: incremental sync on mount (skips silently if not signed in)

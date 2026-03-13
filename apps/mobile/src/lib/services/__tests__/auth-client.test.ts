@@ -32,6 +32,7 @@ const {
 	getStoredToken,
 	getAuthState,
 	isSignedIn,
+	signInWithSocial,
 } = await import('../auth-client.js');
 
 // ── Test Helpers ──
@@ -451,5 +452,123 @@ describe('integration flow', () => {
 
 		const token = await getStoredToken();
 		expect(token).toBe('new-signed-token');
+	});
+});
+
+// ── signInWithSocial ──
+
+describe('signInWithSocial', () => {
+	it('stores token and user on success with header token and social response shape', async () => {
+		const user = mockUser({ id: 'social-1', email: 'social@test.com', name: 'Social User' });
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: { token: 'session-tok' } }, error: null },
+				{ 'set-auth-token': 'header-social-token' },
+			),
+		);
+
+		const result = await signInWithSocial('google', 'id-token-abc', 'access-token-xyz');
+
+		expect(result).toEqual({ success: true });
+		expect(mockStorage.get('auth_token')).toBe('header-social-token');
+		expect(mockStorage.get('auth_user_id')).toBe('social-1');
+		expect(mockStorage.get('auth_user_email')).toBe('social@test.com');
+		expect(mockStorage.get('auth_user_name')).toBe('Social User');
+	});
+
+	it('falls back to body token from data.session.token when header absent', async () => {
+		const user = mockUser({ id: 'social-2', email: 'fb@test.com', name: 'FB User' });
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: { token: 'body-session-token' } }, error: null },
+			),
+		);
+
+		const result = await signInWithSocial('google', 'id-token-def');
+
+		expect(result).toEqual({ success: true });
+		expect(mockStorage.get('auth_token')).toBe('body-session-token');
+		expect(mockStorage.get('auth_user_id')).toBe('social-2');
+	});
+
+	it('falls back to body.token when data.session absent', async () => {
+		const user = mockUser({ id: 'social-3' });
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ user, token: 'legacy-body-token' },
+			),
+		);
+
+		const result = await signInWithSocial('google', 'id-token-ghi');
+
+		expect(result).toEqual({ success: true });
+		expect(mockStorage.get('auth_token')).toBe('legacy-body-token');
+	});
+
+	it('returns error on HTTP failure', async () => {
+		mockFetch.mockResolvedValueOnce(
+			mockErrorResponse(403, { message: 'Provider not configured' }),
+		);
+
+		const result = await signInWithSocial('google', 'bad-token');
+
+		expect(result).toEqual({ success: false, error: 'Provider not configured' });
+		expect(mockStorage.has('auth_token')).toBe(false);
+	});
+
+	it('returns error on network failure', async () => {
+		mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
+
+		const result = await signInWithSocial('google', 'any-token');
+
+		expect(result).toEqual({ success: false, error: 'Connection refused' });
+		expect(mockStorage.has('auth_token')).toBe(false);
+	});
+
+	it('returns error when no token in response', async () => {
+		const user = mockUser();
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: {} }, error: null },
+			),
+		);
+
+		const result = await signInWithSocial('google', 'id-token-no-tok');
+
+		expect(result).toEqual({ success: false, error: 'No authentication token received' });
+		expect(mockStorage.has('auth_token')).toBe(false);
+	});
+
+	it('sends correct request body shape with provider and idToken object', async () => {
+		const user = mockUser();
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: { token: 'tok' } }, error: null },
+				{ 'set-auth-token': 'tok' },
+			),
+		);
+
+		await signInWithSocial('google', 'my-id-token', 'my-access-token', 'my-nonce');
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('/api/auth/sign-in/social/token'),
+			expect.objectContaining({
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					provider: 'google',
+					idToken: { token: 'my-id-token', accessToken: 'my-access-token', nonce: 'my-nonce' },
+				}),
+			}),
+		);
+	});
+
+	it('never throws', async () => {
+		mockFetch.mockRejectedValueOnce(42);
+
+		const result = await signInWithSocial('google', 'any');
+
+		expect(result.success).toBe(false);
+		expect(result.error).toBeDefined();
 	});
 });

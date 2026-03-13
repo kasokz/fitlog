@@ -57,6 +57,7 @@
 		"@capacitor/filesystem": "^8.1.2",
 		"@capacitor/network": "^8.0.1",
 		"@capacitor/share": "^8.0.1",
+		"@capgo/capacitor-social-login": "^8.3.9",
 		"@dnd-kit/dom": "^0.3.2",
 		"@dnd-kit/svelte": "^0.3.2",
 		"d3-scale": "^4.0.2",

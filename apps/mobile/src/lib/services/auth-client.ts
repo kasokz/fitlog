@@ -299,6 +299,80 @@ export async function getAuthState(): Promise<AuthState> {
 }
 
 /**
+ * Sign in with a social provider (Google, Apple) via native idToken handoff.
+ *
+ * Calls Better Auth's `/api/auth/sign-in/social/token` endpoint with the
+ * idToken obtained from the native SocialLogin plugin. On success, stores
+ * the Bearer token and user info in Preferences.
+ *
+ * The social endpoint returns `{ data: { user, session }, error }` which
+ * differs from the email endpoint's `{ token, user }`. This function
+ * handles both shapes for token and user extraction.
+ *
+ * @param provider - Social provider name ('google' or 'apple')
+ * @param idToken - The idToken from the native sign-in
+ * @param accessToken - Optional access token from the native sign-in
+ * @param nonce - Optional nonce (required for Apple Sign-In)
+ * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
+ */
+export async function signInWithSocial(
+	provider: string,
+	idToken: string,
+	accessToken?: string,
+	nonce?: string,
+): Promise<AuthResult> {
+	try {
+		console.log(`[Auth] signInWithSocial: attempting with ${provider}`);
+
+		const response = await fetch(`${API_BASE_URL}/api/auth/sign-in/social/token`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				provider,
+				idToken: { token: idToken, accessToken, nonce },
+			}),
+		});
+
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({}));
+			const message = parseErrorMessage(errorBody);
+			console.error(`[Auth] signInWithSocial: failed (${response.status}) — ${message}`);
+			return { success: false, error: message };
+		}
+
+		const body = await response.json();
+
+		// Extract token: prefer set-auth-token header, fall back to body paths
+		const headerToken = extractToken(response, body);
+		const token = headerToken
+			|| body.data?.session?.token
+			|| body.token
+			|| null;
+
+		if (!token) {
+			console.error('[Auth] signInWithSocial: no token in response');
+			return { success: false, error: 'No authentication token received' };
+		}
+
+		// Extract user: social response wraps in data.user, email response uses body.user
+		const user: BetterAuthUser | undefined = body.data?.user || body.user;
+
+		if (!user) {
+			console.error('[Auth] signInWithSocial: no user in response');
+			return { success: false, error: 'No user data received' };
+		}
+
+		await storeCredentials(token, user);
+		console.log(`[Auth] signInWithSocial: success for user ${user.id}`);
+		return { success: true };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Social sign-in failed';
+		console.error('[Auth] signInWithSocial: unexpected error', error);
+		return { success: false, error: message };
+	}
+}
+
+/**
  * Convenience check for whether the user is currently signed in.
  *
  * @returns `true` if a token is stored, `false` otherwise.

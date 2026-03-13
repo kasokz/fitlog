@@ -8,6 +8,7 @@
  * @module
  */
 
+import { Capacitor } from '@capacitor/core';
 import { CapgoCapacitorFastSql } from '@capgo/capacitor-fast-sql';
 import type { SQLResult, SQLValue } from '@capgo/capacitor-fast-sql';
 
@@ -148,6 +149,40 @@ async function initializeConnection(): Promise<void> {
 	}
 }
 
+// ── Web persistence ──
+// The web fallback (sql.js + IndexedDB) only saves on disconnect().
+// We debounce-flush after writes so data survives page refresh.
+// A mutex ensures disconnect/reconnect never races with execute calls.
+
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let dbMutex: Promise<void> = Promise.resolve();
+
+const FLUSH_DELAY_MS = 500;
+
+function withDbLock<T>(fn: () => Promise<T>): Promise<T> {
+	const prev = dbMutex;
+	let resolve: () => void;
+	dbMutex = new Promise<void>((r) => (resolve = r));
+	return prev.then(fn).finally(() => resolve!());
+}
+
+function scheduleWebFlush(): void {
+	if (Capacitor.isNativePlatform()) return;
+	if (flushTimer) clearTimeout(flushTimer);
+	flushTimer = setTimeout(() => {
+		flushTimer = null;
+		withDbLock(async () => {
+			try {
+				await CapgoCapacitorFastSql.disconnect({ database: DB_NAME });
+				await CapgoCapacitorFastSql.connect({ database: DB_NAME });
+				log('Web flush: persisted to IndexedDB');
+			} catch (err) {
+				logError('Web flush failed', err);
+			}
+		});
+	}, FLUSH_DELAY_MS);
+}
+
 // ── Public API ──
 
 /**
@@ -187,8 +222,12 @@ function getConnectedDatabase(): string {
  * Automatically initializes the database if needed.
  */
 export async function dbExecute(statement: string, params?: SQLValue[]): Promise<SQLResult> {
-	const database = await getDb();
-	return CapgoCapacitorFastSql.execute({ database, statement, params });
+	return withDbLock(async () => {
+		const database = await getDb();
+		const result = await CapgoCapacitorFastSql.execute({ database, statement, params });
+		scheduleWebFlush();
+		return result;
+	});
 }
 
 /**
@@ -199,9 +238,11 @@ export async function dbQuery<T extends Record<string, SQLValue> = Record<string
 	statement: string,
 	params?: SQLValue[]
 ): Promise<T[]> {
-	const database = await getDb();
-	const result = await CapgoCapacitorFastSql.execute({ database, statement, params });
-	return result.rows as T[];
+	return withDbLock(async () => {
+		const database = await getDb();
+		const result = await CapgoCapacitorFastSql.execute({ database, statement, params });
+		return result.rows as T[];
+	});
 }
 
 /**
