@@ -301,7 +301,7 @@ export async function getAuthState(): Promise<AuthState> {
 /**
  * Sign in with a social provider (Google, Apple) via native idToken handoff.
  *
- * Calls Better Auth's `/api/auth/sign-in/social/token` endpoint with the
+ * Calls Better Auth's `/api/auth/sign-in/social` endpoint with the
  * idToken obtained from the native SocialLogin plugin. On success, stores
  * the Bearer token and user info in Preferences.
  *
@@ -313,6 +313,7 @@ export async function getAuthState(): Promise<AuthState> {
  * @param idToken - The idToken from the native sign-in
  * @param accessToken - Optional access token from the native sign-in
  * @param nonce - Optional nonce (required for Apple Sign-In)
+ * @param user - Optional user profile data (Apple sends name/email only on first auth)
  * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
  */
 export async function signInWithSocial(
@@ -320,16 +321,22 @@ export async function signInWithSocial(
 	idToken: string,
 	accessToken?: string,
 	nonce?: string,
+	user?: { name?: { firstName?: string; lastName?: string }; email?: string },
 ): Promise<AuthResult> {
 	try {
 		console.log(`[Auth] signInWithSocial: attempting with ${provider}`);
 
-		const response = await fetch(`${API_BASE_URL}/api/auth/sign-in/social/token`, {
+		const idTokenPayload: Record<string, unknown> = { token: idToken, accessToken, nonce };
+		if (user) {
+			idTokenPayload.user = user;
+		}
+
+		const response = await fetch(`${API_BASE_URL}/api/auth/sign-in/social`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				provider,
-				idToken: { token: idToken, accessToken, nonce },
+				idToken: idTokenPayload,
 			}),
 		});
 
@@ -355,15 +362,15 @@ export async function signInWithSocial(
 		}
 
 		// Extract user: social response wraps in data.user, email response uses body.user
-		const user: BetterAuthUser | undefined = body.data?.user || body.user;
+		const responseUser: BetterAuthUser | undefined = body.data?.user || body.user;
 
-		if (!user) {
+		if (!responseUser) {
 			console.error('[Auth] signInWithSocial: no user in response');
 			return { success: false, error: 'No user data received' };
 		}
 
-		await storeCredentials(token, user);
-		console.log(`[Auth] signInWithSocial: success for user ${user.id}`);
+		await storeCredentials(token, responseUser);
+		console.log(`[Auth] signInWithSocial: success for user ${responseUser.id}`);
 		return { success: true };
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Social sign-in failed';

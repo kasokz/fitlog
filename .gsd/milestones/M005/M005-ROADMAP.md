@@ -57,7 +57,7 @@ This milestone is complete only when all are true:
 - [x] **S01: Server Config + Auth Client + Google Sign-In** `risk:high` `depends:[]`
   > After this: User can tap "Continue with Google" on the sign-in page, authenticate via native Credential Manager, and receive a valid session token stored in Preferences. Server has Google + Apple social providers configured. Auth client has `signInWithSocial()`. Verified on a real device.
 
-- [ ] **S02: Apple Sign-In + Auth UI Finalization** `risk:medium` `depends:[S01]`
+- [x] **S02: Apple Sign-In + Auth UI Finalization** `risk:medium` `depends:[S01]`
   > After this: iOS users see both Google and Apple buttons. Android users see Google only. Apple Sign-In works end-to-end with nonce. Social buttons appear above email form with divider on both sign-in and sign-up pages. Post-login sync triggers. All i18n keys in de and en.
 
 - [ ] **S03: Connected Accounts in Settings** `risk:low` `depends:[S01]`

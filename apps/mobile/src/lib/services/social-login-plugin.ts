@@ -26,10 +26,17 @@ export interface SocialLoginResult {
 	accessToken?: string;
 }
 
+export interface AppleProfile {
+	email: string | null;
+	givenName: string | null;
+	familyName: string | null;
+}
+
 export interface AppleSocialLoginResult {
 	idToken: string;
 	accessToken?: string;
 	nonce: string;
+	profile?: AppleProfile;
 }
 
 // ── Helpers ──
@@ -151,11 +158,27 @@ export async function loginWithApple(nonce: string): Promise<AppleSocialLoginRes
 			return null;
 		}
 
+		// Extract profile if available (Apple only sends it on first authorization)
+		const profile: AppleProfile | undefined = result.profile
+			? {
+					email: (result.profile as Record<string, string | null>).email ?? null,
+					givenName: (result.profile as Record<string, string | null>).givenName ?? null,
+					familyName: (result.profile as Record<string, string | null>).familyName ?? null,
+				}
+			: undefined;
+
+		if (profile) {
+			console.log('[SocialLogin] loginWithApple: profile data extracted');
+		} else {
+			console.log('[SocialLogin] loginWithApple: no profile data (returning sign-in)');
+		}
+
 		console.log('[SocialLogin] loginWithApple: success');
 		return {
 			idToken: result.idToken,
 			accessToken: result.accessToken?.token,
 			nonce,
+			profile,
 		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);

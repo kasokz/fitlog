@@ -5,9 +5,10 @@
 	import { Button } from '@repo/ui/components/ui/button';
 	import { m } from '$lib/paraglide/messages.js';
 
-	import { loginWithGoogle } from '$lib/services/social-login-plugin.js';
+	import { loginWithGoogle, loginWithApple } from '$lib/services/social-login-plugin.js';
 	import { signInWithSocial } from '$lib/services/auth-client.js';
 	import { fullSync } from '$lib/services/sync.js';
+	import { isIOS } from '$lib/utils/platform.js';
 
 	interface Props {
 		onSuccess?: () => void;
@@ -51,6 +52,55 @@
 			loading = false;
 		}
 	}
+
+	async function handleAppleSignIn() {
+		if (loading) return;
+		loading = true;
+
+		try {
+			const nonce = crypto.randomUUID();
+			const pluginResult = await loginWithApple(nonce);
+
+			// User cancelled — stop silently, no toast
+			if (!pluginResult) {
+				loading = false;
+				return;
+			}
+
+			// Map Apple profile to the user shape expected by Better Auth
+			const user = pluginResult.profile
+				? {
+						name: {
+							firstName: pluginResult.profile.givenName ?? undefined,
+							lastName: pluginResult.profile.familyName ?? undefined,
+						},
+						email: pluginResult.profile.email ?? undefined,
+					}
+				: undefined;
+
+			const result = await signInWithSocial(
+				'apple',
+				pluginResult.idToken,
+				pluginResult.accessToken,
+				nonce,
+				user,
+			);
+
+			if (result.success) {
+				toast.success(m.auth_social_signin_success());
+				onSuccess?.();
+				// Fire-and-forget: full sync after social sign-in
+				fullSync().catch(() => {});
+			} else {
+				toast.error(result.error ?? m.auth_social_signin_error());
+			}
+		} catch (err) {
+			console.error('[Auth UI] Apple sign-in error:', err);
+			toast.error(m.auth_social_signin_error());
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <div class="flex flex-col gap-3">
@@ -85,4 +135,22 @@
 		{/if}
 		{m.auth_social_google_button()}
 	</Button>
+
+	{#if isIOS()}
+		<Button
+			class="w-full bg-black text-white hover:bg-black/90"
+			disabled={loading}
+			onclick={handleAppleSignIn}
+		>
+			{#if loading}
+				<LoaderCircle class="mr-2 size-4 animate-spin" />
+			{:else}
+				<!-- Apple logo SVG -->
+				<svg class="mr-2 size-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+					<path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+				</svg>
+			{/if}
+			{m.auth_social_apple_button()}
+		</Button>
+	{/if}
 </div>

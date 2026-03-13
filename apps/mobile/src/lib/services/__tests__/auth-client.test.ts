@@ -551,7 +551,7 @@ describe('signInWithSocial', () => {
 		await signInWithSocial('google', 'my-id-token', 'my-access-token', 'my-nonce');
 
 		expect(mockFetch).toHaveBeenCalledWith(
-			expect.stringContaining('/api/auth/sign-in/social/token'),
+			expect.stringContaining('/api/auth/sign-in/social'),
 			expect.objectContaining({
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -561,6 +561,55 @@ describe('signInWithSocial', () => {
 				}),
 			}),
 		);
+
+		// Verify the URL does NOT contain /social/token (the old bug)
+		const calledUrl = mockFetch.mock.calls[0][0] as string;
+		expect(calledUrl).not.toContain('/social/token');
+	});
+
+	it('includes idToken.user when user param is provided', async () => {
+		const user = mockUser({ id: 'apple-1', email: 'apple@test.com', name: 'Apple User' });
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: { token: 'apple-tok' } }, error: null },
+				{ 'set-auth-token': 'apple-tok' },
+			),
+		);
+
+		await signInWithSocial('apple', 'apple-id-token', 'apple-access-token', 'nonce-123', {
+			name: { firstName: 'Jane', lastName: 'Doe' },
+			email: 'jane@apple.com',
+		});
+
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+		expect(body.provider).toBe('apple');
+		expect(body.idToken.token).toBe('apple-id-token');
+		expect(body.idToken.accessToken).toBe('apple-access-token');
+		expect(body.idToken.nonce).toBe('nonce-123');
+		expect(body.idToken.user).toEqual({
+			name: { firstName: 'Jane', lastName: 'Doe' },
+			email: 'jane@apple.com',
+		});
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('/api/auth/sign-in/social'),
+			expect.anything(),
+		);
+	});
+
+	it('omits idToken.user when user param is not provided', async () => {
+		const user = mockUser();
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse(
+				{ data: { user, session: { token: 'tok' } }, error: null },
+				{ 'set-auth-token': 'tok' },
+			),
+		);
+
+		await signInWithSocial('google', 'id-token-only');
+
+		const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+		expect(body.idToken.user).toBeUndefined();
 	});
 
 	it('never throws', async () => {
