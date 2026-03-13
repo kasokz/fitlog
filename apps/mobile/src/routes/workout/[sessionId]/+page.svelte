@@ -24,6 +24,7 @@
 	import type { Exercise, Equipment } from '$lib/types/exercise.js';
 
 	import ExerciseCard from '$lib/components/workout/ExerciseCard.svelte';
+	import DeloadBanner from '$lib/components/workout/DeloadBanner.svelte';
 	import DurationTimer from '$lib/components/workout/DurationTimer.svelte';
 	import RestTimer from '$lib/components/workout/RestTimer.svelte';
 	import type { WorkingSet } from '$lib/components/workout/SetRow.svelte';
@@ -43,6 +44,11 @@
 
 	let finishDialogOpen = $state(false);
 	let finishing = $state(false);
+
+	/** Deload banner state */
+	let isDeloadSession = $state(false);
+	let deloadWeek = $state<number | null>(null);
+	let deloadBannerDismissed = $state(false);
 
 	/** Progression suggestions keyed by exerciseId — populated async after session load */
 	let progressionSuggestions = $state<Map<string, ProgressionSuggestion>>(new Map());
@@ -169,6 +175,24 @@
 			}
 
 			exerciseGroups = groups;
+
+			// Detect deload session for banner display
+			try {
+				if (loadedSession.mesocycle_id != null) {
+					const mesocycle = await ProgramRepository.getMesocycleByProgramId(loadedSession.program_id);
+					if (
+						mesocycle &&
+						mesocycle.deload_week_number !== 0 &&
+						loadedSession.mesocycle_week === mesocycle.deload_week_number
+					) {
+						isDeloadSession = true;
+						deloadWeek = loadedSession.mesocycle_week;
+					}
+				}
+			} catch (deloadErr) {
+				// Banner is non-critical — silently skip on error
+				console.warn('[Workout] Deload banner detection failed:', deloadErr);
+			}
 
 			// Fire-and-forget: load progression suggestions after UI renders
 			const groupExerciseIds = groups.map((g) => g.exerciseId);
@@ -417,6 +441,10 @@
 		</Empty>
 	{:else}
 		<div class="space-y-4">
+			{#if isDeloadSession && !deloadBannerDismissed && deloadWeek}
+				<DeloadBanner week={deloadWeek} ondismiss={() => { deloadBannerDismissed = true; }} />
+			{/if}
+
 			{#each exerciseGroups as group, groupIndex (group.exerciseId)}
 				<ExerciseCard
 					exerciseName={group.exerciseName}

@@ -14,6 +14,7 @@
 	import { ExerciseRepository } from '$lib/db/repositories/exercise.js';
 	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
 	import type { ProgramWithDays, Mesocycle } from '$lib/types/program.js';
+	import { applyDeloadTransform, type CandidateSet } from '$lib/services/analytics/deloadCalculator.js';
 
 	import TrainingDayCard from '$lib/components/programs/TrainingDayCard.svelte';
 	import TrainingDayForm from '$lib/components/programs/TrainingDayForm.svelte';
@@ -216,19 +217,20 @@
 				programId
 			});
 
-			// Pre-populate sets from last completed session for this day
+			// ── Collect candidate sets for pre-fill ──
+			let candidates: CandidateSet[] = [];
+
 			const lastSession = await WorkoutRepository.getLastSessionForDay(trainingDayId);
 			if (lastSession && lastSession.sets.length > 0) {
-				for (const prevSet of lastSession.sets) {
-					await WorkoutRepository.addSet(session.id, {
-						exercise_id: prevSet.exercise_id,
-						assignment_id: prevSet.assignment_id,
-						set_type: prevSet.set_type,
-						weight: prevSet.weight,
-						reps: prevSet.reps,
-						rir: prevSet.rir
-					});
-				}
+				// Last-session branch: carry forward previous sets
+				candidates = lastSession.sets.map((prevSet) => ({
+					exercise_id: prevSet.exercise_id,
+					assignment_id: prevSet.assignment_id,
+					set_type: prevSet.set_type,
+					weight: prevSet.weight,
+					reps: prevSet.reps,
+					rir: prevSet.rir
+				}));
 			} else {
 				// First time — create default sets from template assignments
 				const day = program?.trainingDays.find((d) => d.id === trainingDayId);
@@ -236,7 +238,7 @@
 					for (const assignment of day.assignments) {
 						const targetSets = assignment.target_sets ?? 3;
 						for (let i = 0; i < targetSets; i++) {
-							await WorkoutRepository.addSet(session.id, {
+							candidates.push({
 								exercise_id: assignment.exercise_id,
 								assignment_id: assignment.id,
 								set_type: 'working',
@@ -247,6 +249,33 @@
 						}
 					}
 				}
+			}
+
+			// ── Apply deload transform if in deload week ──
+			try {
+				const transformed = applyDeloadTransform(candidates, mesocycle);
+				if (transformed !== candidates) {
+					console.log('[Workout] Deload week detected, applying deload transform', {
+						mesocycleId: mesocycle?.id,
+						currentWeek: mesocycle?.current_week
+					});
+				}
+				candidates = transformed;
+			} catch (err) {
+				console.error('[Workout] Deload transform failed', err);
+				// Fall through to normal pre-fill on error
+			}
+
+			// ── Write candidate sets to session ──
+			for (const c of candidates) {
+				await WorkoutRepository.addSet(session.id, {
+					exercise_id: c.exercise_id,
+					assignment_id: c.assignment_id,
+					set_type: c.set_type as 'working' | 'warmup' | 'drop' | 'failure',
+					weight: c.weight,
+					reps: c.reps,
+					rir: c.rir
+				});
 			}
 
 			goto(`/workout/${session.id}`);

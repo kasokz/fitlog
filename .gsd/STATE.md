@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M002 — Analytics & Progression Intelligence
-**Active Slice:** S05 — Deload Auto-Adjustment
+**Active Slice:** S06 — Freemium Analytics Gate
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S05 (Deload Auto-Adjustment).
+Plan slice S06 (Freemium Analytics Gate).

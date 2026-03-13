@@ -67,7 +67,7 @@ This milestone is complete only when all are true:
 - [x] **S04: RIR Progression Suggestions in Workout** `risk:medium` `depends:[S01]`
   > After this: During an active workout, if the analytics engine determines a progression suggestion exists for an exercise (based on RIR trends from recent sessions), a non-intrusive banner appears on the exercise card suggesting a specific weight increase (rounded to practical increments per equipment type).
 
-- [ ] **S05: Deload Auto-Adjustment** `risk:low` `depends:[S01]`
+- [x] **S05: Deload Auto-Adjustment** `risk:low` `depends:[S01]`
   > After this: When a mesocycle reaches its deload week and the user starts a workout, pre-filled set weights are automatically reduced to ~60% of previous session values and volume is adjusted. A deload indicator banner shows on the workout screen.
 
 - [ ] **S06: Freemium Analytics Gate** `risk:low` `depends:[S02, S03, S04]`

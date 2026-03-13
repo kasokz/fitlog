@@ -1,10 +1,12 @@
 /**
  * Deload Calculator — weight and volume reduction for deload weeks.
  *
- * Provides two functions:
+ * Provides three main functions:
  * - `isDeloadWeek` checks if the current mesocycle week is the designated deload week
  * - `calculateDeloadSets` transforms previous working sets into deloaded sets
  *   with reduced weight (~60% default) and optional volume reduction (drop last set when >3)
+ * - `applyDeloadTransform` takes candidate sets (pre-fill data) and a mesocycle,
+ *   returns transformed sets when in a deload week — the integration point for workout start
  *
  * Weight is rounded to the nearest 2.5kg (standard plate increment).
  * Non-working sets are filtered out (defense-in-depth).
@@ -17,6 +19,18 @@ import type { DeloadSet } from '../../types/analytics.js';
 import type { Mesocycle } from '../../types/program.js';
 import type { WorkoutSet } from '../../types/workout.js';
 import { SetType } from '../../types/workout.js';
+
+// ── Candidate Set — pre-fill intermediate type ──
+
+/** A set prepared for pre-fill before writing to the DB */
+export interface CandidateSet {
+	exercise_id: string;
+	assignment_id: string | null;
+	set_type: string;
+	weight: number | null;
+	reps: number | null;
+	rir: number | null;
+}
 
 /** Standard plate increment for rounding (kg) */
 const PLATE_INCREMENT = 2.5;
@@ -73,4 +87,80 @@ export function calculateDeloadSets(
 		reps: set.reps,
 		original_weight: set.weight
 	}));
+}
+
+// ── Pre-fill deload transform ──
+
+/**
+ * Apply deload transformation to candidate sets when the mesocycle is in its deload week.
+ *
+ * This is the integration point between the workout start pre-fill and the deload calculator.
+ * When `isDeloadWeek(mesocycle)` is true, candidate sets are grouped by exercise_id,
+ * each group is transformed via `calculateDeloadSets()`, and the results are mapped back
+ * to CandidateSet format for writing to the DB.
+ *
+ * When not in a deload week (or mesocycle is null), returns the original sets unchanged.
+ *
+ * @param candidates — pre-fill sets collected from either the last-session or template branch
+ * @param mesocycle — current mesocycle state (null if no mesocycle configured)
+ * @returns transformed candidate sets (deloaded or unchanged)
+ */
+export function applyDeloadTransform(
+	candidates: CandidateSet[],
+	mesocycle: Mesocycle | null
+): CandidateSet[] {
+	// No mesocycle or not a deload week → pass through unchanged
+	if (!mesocycle || !isDeloadWeek(mesocycle)) {
+		return candidates;
+	}
+
+	// Group candidates by exercise_id (preserving order)
+	const grouped = new Map<string, CandidateSet[]>();
+	for (const c of candidates) {
+		const group = grouped.get(c.exercise_id);
+		if (group) {
+			group.push(c);
+		} else {
+			grouped.set(c.exercise_id, [c]);
+		}
+	}
+
+	// Transform each exercise group through calculateDeloadSets
+	const result: CandidateSet[] = [];
+	for (const [exerciseId, group] of grouped) {
+		// Build WorkoutSet-shaped objects for calculateDeloadSets
+		const asWorkoutSets = group.map((c, i) => ({
+			id: '',
+			session_id: '',
+			exercise_id: c.exercise_id,
+			assignment_id: c.assignment_id,
+			set_number: i + 1,
+			set_type: c.set_type as WorkoutSet['set_type'],
+			weight: c.weight,
+			reps: c.reps,
+			rir: c.rir,
+			completed: false,
+			rest_seconds: null,
+			deleted_at: null
+		})) satisfies WorkoutSet[];
+
+		const deloadSets = calculateDeloadSets(asWorkoutSets);
+
+		// Map DeloadSet back to CandidateSet, preserving assignment_id from original group
+		for (const ds of deloadSets) {
+			// Find matching original candidate for assignment_id lookup
+			const originalIdx = ds.set_number - 1;
+			const original = group[originalIdx];
+			result.push({
+				exercise_id: ds.exercise_id,
+				assignment_id: original?.assignment_id ?? null,
+				set_type: ds.set_type,
+				weight: ds.weight,
+				reps: ds.reps,
+				rir: null // Deload sets don't carry RIR targets
+			});
+		}
+	}
+
+	return result;
 }

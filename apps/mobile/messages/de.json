@@ -305,5 +305,9 @@
 	"progression_banner_message": "Erhöhe auf {suggestedWeight} kg (+{increment} kg)",
 	"progression_banner_reason": "Durchschnittliches RIR von {avgRir} über {sessions} Einheiten",
 	"progression_banner_dismiss": "Ausblenden",
-	"progression_banner_sessions_analyzed": "{sessions} Einheiten analysiert"
+	"progression_banner_sessions_analyzed": "{sessions} Einheiten analysiert",
+	"deload_banner_title": "Deload-Woche",
+	"deload_banner_description": "Gewichte auf ~60% reduziert. Fokus auf Erholung und Technik.",
+	"deload_banner_week": "Woche {week}",
+	"deload_banner_dismiss": "Deload-Hinweis schließen"
 }
