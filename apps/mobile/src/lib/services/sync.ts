@@ -68,6 +68,69 @@ const TABLE_COLUMNS: Record<string, readonly string[]> = {
 	],
 };
 
+// ── Sync State ──
+
+/**
+ * Observable sync state — combines in-memory flags with persisted timestamps.
+ */
+export interface SyncState {
+	isSyncing: boolean;
+	lastSyncAt: string | null;
+	lastError: string | null;
+	lastErrorAt: string | null;
+}
+
+/** In-memory sync state (timestamps come from Preferences on read). */
+const syncState = {
+	isSyncing: false,
+	lastError: null as string | null,
+	lastErrorAt: null as string | null,
+};
+
+/**
+ * Read full sync state — merges in-memory flags with persisted Preferences timestamps.
+ * The `lastSyncAt` is the later of `sync_last_push_at` and `sync_last_pull_at`.
+ */
+export async function getSyncState(): Promise<SyncState> {
+	const { value: lastPushAt } = await Preferences.get({ key: PREF_LAST_PUSH });
+	const { value: lastPullAt } = await Preferences.get({ key: PREF_LAST_PULL });
+
+	let lastSyncAt: string | null = null;
+	if (lastPushAt && lastPullAt) {
+		lastSyncAt = lastPushAt > lastPullAt ? lastPushAt : lastPullAt;
+	} else {
+		lastSyncAt = lastPushAt ?? lastPullAt;
+	}
+
+	return {
+		isSyncing: syncState.isSyncing,
+		lastSyncAt,
+		lastError: syncState.lastError,
+		lastErrorAt: syncState.lastErrorAt,
+	};
+}
+
+/**
+ * Clear all sync state — removes Preferences keys and resets in-memory state.
+ * Call on sign-out to prevent cross-account timestamp leaks.
+ */
+export async function clearSyncState(): Promise<void> {
+	await Preferences.remove({ key: PREF_LAST_PUSH });
+	await Preferences.remove({ key: PREF_LAST_PULL });
+	syncState.isSyncing = false;
+	syncState.lastError = null;
+	syncState.lastErrorAt = null;
+	log('Sync state cleared');
+}
+
+/**
+ * UI-callable sync trigger — runs incremental sync.
+ * Use for "Sync Now" button in settings.
+ */
+export async function triggerSync(): Promise<void> {
+	await incrementalSync();
+}
+
 // ── Logging ──
 
 function log(message: string): void {
@@ -77,6 +140,9 @@ function log(message: string): void {
 function logError(message: string, error: unknown): void {
 	const msg = error instanceof Error ? error.message : String(error);
 	console.error(`[Sync] ${message}`, { error: msg });
+	// Capture error in sync state for observability
+	syncState.lastError = msg;
+	syncState.lastErrorAt = new Date().toISOString();
 }
 
 // ── Push ──
@@ -294,19 +360,32 @@ async function upsertBodyWeightEntry(
 export async function fullSync(): Promise<void> {
 	if (!(await isSignedIn())) return;
 
+	syncState.isSyncing = true;
+	// Clear previous error — logError will re-set if push/pull fails
+	syncState.lastError = null;
+	syncState.lastErrorAt = null;
 	log('Full sync starting');
 
-	const pushResult = await pushChanges(null);
-	if (pushResult) {
-		await Preferences.set({ key: PREF_LAST_PUSH, value: pushResult });
-	}
+	try {
+		const pushResult = await pushChanges(null);
+		if (pushResult) {
+			await Preferences.set({ key: PREF_LAST_PUSH, value: pushResult });
+		}
 
-	const pullResult = await pullChanges(null);
-	if (pullResult) {
-		await Preferences.set({ key: PREF_LAST_PULL, value: pullResult });
-	}
+		const pullResult = await pullChanges(null);
+		if (pullResult) {
+			await Preferences.set({ key: PREF_LAST_PULL, value: pullResult });
+		}
 
-	log('Full sync complete');
+		log('Full sync complete');
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		syncState.lastError = msg;
+		syncState.lastErrorAt = new Date().toISOString();
+		logError('Full sync failed', error);
+	} finally {
+		syncState.isSyncing = false;
+	}
 }
 
 /**
@@ -316,20 +395,33 @@ export async function fullSync(): Promise<void> {
 export async function incrementalSync(): Promise<void> {
 	if (!(await isSignedIn())) return;
 
+	syncState.isSyncing = true;
+	// Clear previous error — logError will re-set if push/pull fails
+	syncState.lastError = null;
+	syncState.lastErrorAt = null;
 	log('Incremental sync starting');
 
-	const { value: lastPushAt } = await Preferences.get({ key: PREF_LAST_PUSH });
-	const { value: lastPullAt } = await Preferences.get({ key: PREF_LAST_PULL });
+	try {
+		const { value: lastPushAt } = await Preferences.get({ key: PREF_LAST_PUSH });
+		const { value: lastPullAt } = await Preferences.get({ key: PREF_LAST_PULL });
 
-	const pushResult = await pushChanges(lastPushAt);
-	if (pushResult) {
-		await Preferences.set({ key: PREF_LAST_PUSH, value: pushResult });
+		const pushResult = await pushChanges(lastPushAt);
+		if (pushResult) {
+			await Preferences.set({ key: PREF_LAST_PUSH, value: pushResult });
+		}
+
+		const pullResult = await pullChanges(lastPullAt);
+		if (pullResult) {
+			await Preferences.set({ key: PREF_LAST_PULL, value: pullResult });
+		}
+
+		log('Incremental sync complete');
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error);
+		syncState.lastError = msg;
+		syncState.lastErrorAt = new Date().toISOString();
+		logError('Incremental sync failed', error);
+	} finally {
+		syncState.isSyncing = false;
 	}
-
-	const pullResult = await pullChanges(lastPullAt);
-	if (pullResult) {
-		await Preferences.set({ key: PREF_LAST_PULL, value: pullResult });
-	}
-
-	log('Incremental sync complete');
 }

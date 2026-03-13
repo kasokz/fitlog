@@ -69,7 +69,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Data Export (CSV/JSON)** `risk:low` `depends:[]`
   > After this: User can export complete workout history as CSV or JSON from a new export screen in Settings. Files shared via native share sheet. Pure client-side — reads from local SQLite, no server dependency.
 
-- [ ] **S04: Sync Status UI + Account Settings** `risk:low` `depends:[S01, S02]`
+- [x] **S04: Sync Status UI + Account Settings** `risk:low` `depends:[S01, S02]`
   > After this: Sync status indicator shows last sync time, in-progress state, and errors. Account section in Settings shows signed-in user info with sign-out option. Sync errors surface actionable messages.
 
 - [ ] **S05: i18n — German (base) + English** `risk:low` `depends:[S01, S02, S03, S04]`

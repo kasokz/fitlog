@@ -13,6 +13,8 @@
 	import type { PurchasedProduct } from '$lib/services/premium.js';
 	import { getAuthState, signOut as authSignOut } from '$lib/services/auth-client.js';
 	import type { AuthState } from '$lib/services/auth-client.js';
+	import { clearSyncState } from '$lib/services/sync.js';
+	import SyncStatusSection from '$lib/components/settings/SyncStatusSection.svelte';
 	import { LogIn, LogOut, UserPlus } from '@lucide/svelte';
 	import { generateWorkoutCSV, generateBodyWeightCSV, generateFullJSON } from '$lib/services/export.js';
 	import { shareExportFile, shareMultipleExportFiles } from '$lib/services/export-file.js';
@@ -131,6 +133,7 @@
 		try {
 			const result = await authSignOut();
 			if (result.success) {
+				await clearSyncState();
 				authState = { isSignedIn: false, userId: null, email: null, name: null };
 				toast.success(m.auth_signout_success());
 			} else {
@@ -398,6 +401,11 @@
 			</div>
 		{/if}
 	</div>
+
+	<!-- Sync Status Section (only when signed in) -->
+	{#if authState.isSignedIn}
+		<SyncStatusSection />
+	{/if}
 
 	<!-- Subscription Section (visible to ALL users) -->
 	<div class="space-y-3 mt-6">

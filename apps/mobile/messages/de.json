@@ -397,5 +397,16 @@
 	"export_json_button": "Als JSON exportieren",
 	"export_success": "Export erfolgreich",
 	"export_error": "Export fehlgeschlagen: {error}",
-	"export_in_progress": "Exportiere..."
+	"export_in_progress": "Exportiere...",
+	"sync_status_section": "Synchronisation",
+	"sync_status_synced": "Synchronisiert",
+	"sync_status_syncing": "Synchronisiere...",
+	"sync_status_error": "Fehler",
+	"sync_status_never": "Noch nie synchronisiert",
+	"sync_status_just_now": "Gerade eben",
+	"sync_status_last_synced": "Zuletzt synchronisiert: {time}",
+	"sync_status_sync_now": "Jetzt synchronisieren",
+	"sync_status_error_title": "Synchronisierungsfehler",
+	"sync_status_error_description": "{error}",
+	"sync_status_retry": "Erneut versuchen"
 }

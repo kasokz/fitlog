@@ -46,7 +46,7 @@ vi.stubGlobal('fetch', mockFetch);
 
 // ── Import module under test ──
 
-const { pushChanges, pullChanges, fullSync, incrementalSync } = await import('../sync.js');
+const { pushChanges, pullChanges, fullSync, incrementalSync, getSyncState, clearSyncState, triggerSync } = await import('../sync.js');
 
 // ── Helpers ──
 
@@ -477,5 +477,168 @@ describe('incrementalSync', () => {
 
 		expect(mockFetch).not.toHaveBeenCalled();
 		expect(mockDbQuery).not.toHaveBeenCalled();
+	});
+});
+
+// ── getSyncState ──
+
+describe('getSyncState', () => {
+	it('returns defaults when no state exists', async () => {
+		const state = await getSyncState();
+
+		expect(state).toEqual({
+			isSyncing: false,
+			lastSyncAt: null,
+			lastError: null,
+			lastErrorAt: null,
+		});
+	});
+
+	it('reads persisted timestamps and returns the later as lastSyncAt', async () => {
+		mockStorage.set('sync_last_push_at', '2026-03-13T10:00:00Z');
+		mockStorage.set('sync_last_pull_at', '2026-03-13T12:00:00Z');
+
+		const state = await getSyncState();
+
+		expect(state.lastSyncAt).toBe('2026-03-13T12:00:00Z');
+		expect(state.isSyncing).toBe(false);
+		expect(state.lastError).toBeNull();
+	});
+
+	it('returns push timestamp when only push exists', async () => {
+		mockStorage.set('sync_last_push_at', '2026-03-13T10:00:00Z');
+
+		const state = await getSyncState();
+
+		expect(state.lastSyncAt).toBe('2026-03-13T10:00:00Z');
+	});
+
+	it('returns pull timestamp when only pull exists', async () => {
+		mockStorage.set('sync_last_pull_at', '2026-03-13T11:00:00Z');
+
+		const state = await getSyncState();
+
+		expect(state.lastSyncAt).toBe('2026-03-13T11:00:00Z');
+	});
+});
+
+// ── isSyncing flag ──
+
+describe('isSyncing flag', () => {
+	it('is true during sync and false after', async () => {
+		// Capture isSyncing during sync via a side-effect in mockDbQuery
+		let syncingDuringPush = false;
+
+		mockDbQuery.mockImplementation(async (stmt: string) => {
+			if (stmt.includes('exercises') && !stmt.includes('body_weight')) {
+				const state = await getSyncState();
+				syncingDuringPush = state.isSyncing;
+				return [{ id: 'ex-1', updated_at: '2026-01-01' }];
+			}
+			return [];
+		});
+
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ accepted: 1, conflicts: 0, server_now: '2026-03-13T12:00:00Z' }),
+		);
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ tables: {}, server_now: '2026-03-13T12:00:01Z' }),
+		);
+
+		await fullSync();
+
+		expect(syncingDuringPush).toBe(true);
+
+		const stateAfter = await getSyncState();
+		expect(stateAfter.isSyncing).toBe(false);
+	});
+});
+
+// ── lastError / lastErrorAt ──
+
+describe('lastError tracking', () => {
+	it('captures error on sync failure and clears on success', async () => {
+		// Trigger an error: dbQuery throws during pushChanges
+		mockDbQuery.mockRejectedValueOnce(new Error('DB exploded'));
+		// Pull still needs a fetch mock (push fails before fetch)
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ tables: {}, server_now: '2026-03-13T11:00:00Z' }),
+		);
+
+		await fullSync();
+
+		const stateAfterError = await getSyncState();
+		expect(stateAfterError.lastError).toBe('DB exploded');
+		expect(stateAfterError.lastErrorAt).toBeTruthy();
+		expect(stateAfterError.isSyncing).toBe(false);
+
+		// Second: successful sync clears error
+		mockDbQuery.mockResolvedValue([]);
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ tables: {}, server_now: '2026-03-13T12:00:00Z' }),
+		);
+
+		await incrementalSync();
+
+		const stateAfterSuccess = await getSyncState();
+		expect(stateAfterSuccess.lastError).toBeNull();
+		expect(stateAfterSuccess.lastErrorAt).toBeNull();
+	});
+});
+
+// ── clearSyncState ──
+
+describe('clearSyncState', () => {
+	it('removes all sync state', async () => {
+		// Set up some persisted state
+		mockStorage.set('sync_last_push_at', '2026-03-13T10:00:00Z');
+		mockStorage.set('sync_last_pull_at', '2026-03-13T12:00:00Z');
+
+		// Trigger an error to set in-memory error state
+		mockDbQuery.mockRejectedValueOnce(new Error('Some error'));
+		// Pull still needs a fetch mock (push fails before fetch)
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ tables: {}, server_now: '2026-03-13T12:00:01Z' }),
+		);
+		await fullSync();
+
+		// Verify error state is set
+		let state = await getSyncState();
+		expect(state.lastError).toBeTruthy();
+		expect(state.lastSyncAt).toBeTruthy();
+
+		// Clear
+		await clearSyncState();
+
+		state = await getSyncState();
+		expect(state).toEqual({
+			isSyncing: false,
+			lastSyncAt: null,
+			lastError: null,
+			lastErrorAt: null,
+		});
+
+		// Preferences keys are gone
+		expect(mockStorage.has('sync_last_push_at')).toBe(false);
+		expect(mockStorage.has('sync_last_pull_at')).toBe(false);
+	});
+});
+
+// ── triggerSync ──
+
+describe('triggerSync', () => {
+	it('calls incrementalSync', async () => {
+		mockDbQuery.mockResolvedValue([]);
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ tables: {}, server_now: '2026-03-13T12:00:00Z' }),
+		);
+
+		await triggerSync();
+
+		// Should have called pull (incremental sync path)
+		expect(mockFetch).toHaveBeenCalledWith(
+			'http://test-api.local/api/sync/pull',
+			expect.objectContaining({ method: 'POST' }),
+		);
 	});
 });
