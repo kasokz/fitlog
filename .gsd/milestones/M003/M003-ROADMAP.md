@@ -72,7 +72,7 @@ This milestone is complete only when all are true:
 - [x] **S05: App Store & Play Store Listing Optimization** `risk:medium` `depends:[S03, S04]`
   > After this: App metadata (descriptions, keywords, screenshots, what's-new text) is prepared for both stores in de + en localizations via fastlane configuration. Privacy policy and terms of service URLs are set. Store assets are ready for submission.
 
-- [ ] **S06: End-to-End Integration & Store Submission** `risk:medium` `depends:[S05]`
+- [x] **S06: End-to-End Integration & Store Submission** `risk:medium` `depends:[S05]`
   > After this: The full purchase lifecycle is verified end-to-end on real devices — purchase, unlock, restart persistence, restore, subscription expiry. App is submitted to App Store Connect and Google Play Console. Fastlane deliver/supply pushes metadata to both stores.
 
 - [ ] **S07: i18n — New Keys for All Locales** `risk:low` `depends:[S03, S04]`

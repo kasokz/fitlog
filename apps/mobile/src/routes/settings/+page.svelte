@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
 	import { userPrefersMode, setMode } from 'mode-watcher';
@@ -48,7 +49,7 @@
 	});
 
 	$effect(() => {
-		if (import.meta.env.DEV) {
+		if (dev) {
 			isBillingSupported().then((supported) => {
 				billingSupported = supported;
 			});
@@ -275,7 +276,7 @@
 	</div>
 
 	<!-- Premium Dev Toggle (dev mode only) -->
-	{#if import.meta.env.DEV}
+	{#if dev}
 		<div class="space-y-3 mt-6">
 			<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.settings_premium_dev_label()}</h2>
 			<div class="flex items-center justify-between rounded-md border px-4 py-3">
