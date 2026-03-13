@@ -24,7 +24,10 @@ IMPORTANT: Do not just assume you have knowledge about specific features, if you
 | Drag'n'Drop            | ./references/dnd-kit                |
 | Capacitor Updater      | ./references/capacitor-updater      |
 
-!!!VERY VERY IMPORTANT: I have a complete reference project, that has the exact same techstack like this project. It is already in production, which proves its validity. You can find it under `/references/yahtzee`. ALWAYS do a research on not yet encountered patterns in that project!!!
+!!!VERY VERY IMPORTANT: I have a complete reference project, that has the exact same techstack like this project. It is already in production, which proves its validity. You can find it under `./references/yahtzee`. ALWAYS do a research on not yet encountered patterns in that project
+
+Also under `./references/capacitor-live-updates` is a full stack reference app with database, auth etc.
+!!!
 
 ## Tooling Guidelines
 

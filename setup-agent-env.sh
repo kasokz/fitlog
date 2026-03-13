@@ -24,6 +24,7 @@ REPOS=(
   "git@github.com:kamranahmedse/driver.js.git"
   "git@github.com:Cap-go/capacitor-fast-sql.git"
   "git@gitlab.com:project-everything/yahtzee.git"
+  "git@gitlab.com:project-everything/capacitor-live-updates.git"
   "git@github.com:clauderic/dnd-kit.git"
   "git@github.com:Cap-go/capacitor-updater.git"
 )
