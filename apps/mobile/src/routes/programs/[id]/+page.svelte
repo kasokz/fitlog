@@ -263,7 +263,7 @@
 		<Button
 			variant="ghost"
 			size="sm"
-			class="-ml-2 mb-2"
+			class="-ml-2 mb-2 border-2 border-border shadow-md active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 			onclick={() => goto('/programs')}
 		>
 			<ArrowLeft class="mr-1 size-4" />
@@ -294,7 +294,7 @@
 	{:else if program}
 		<!-- Training Days Section -->
 		<div class="mt-2">
-			<h2 class="text-muted-foreground mb-3 text-sm font-medium uppercase tracking-wide">
+			<h2 class="text-muted-foreground mb-3 text-sm font-bold uppercase tracking-wide">
 				{m.programs_detail_days_title()}
 			</h2>
 
@@ -349,17 +349,17 @@
 
 		<!-- Mesocycle Section -->
 		<div class="mt-8">
-			<h2 class="text-muted-foreground mb-3 text-sm font-medium uppercase tracking-wide">
+			<h2 class="text-muted-foreground mb-3 text-sm font-bold uppercase tracking-wide">
 				{m.programs_mesocycle_title()}
 			</h2>
 
 			{#if mesocycle}
 				<!-- Mesocycle card -->
-				<div class="bg-card border rounded-lg p-4">
+				<div class="bg-card border-2 border-border shadow-md p-4">
 					<div class="flex items-center justify-between mb-2">
 						<div class="flex items-center gap-2">
 							<Timer class="text-muted-foreground size-4" />
-							<span class="font-medium">{m.programs_mesocycle_title()}</span>
+							<span class="font-bold">{m.programs_mesocycle_title()}</span>
 						</div>
 						<Button
 							variant="ghost"
@@ -371,15 +371,15 @@
 						</Button>
 					</div>
 					<div class="text-muted-foreground space-y-1 text-sm">
-						<p>{m.programs_mesocycle_weeks_display({ count: mesocycle.weeks_count })}</p>
-						<p>
+						<p class="font-mono">{m.programs_mesocycle_weeks_display({ count: mesocycle.weeks_count })}</p>
+						<p class="font-mono">
 							{#if mesocycle.deload_week_number === 0}
 								{m.programs_mesocycle_deload_none()}
 							{:else}
 								{m.programs_mesocycle_deload_display({ week: mesocycle.deload_week_number })}
 							{/if}
 						</p>
-						<p>{m.programs_mesocycle_current_week_display({ week: mesocycle.current_week })}</p>
+						<p class="font-mono">{m.programs_mesocycle_current_week_display({ week: mesocycle.current_week })}</p>
 					</div>
 				</div>
 			{:else}
@@ -393,6 +393,7 @@
 				<div class="mt-3 flex justify-center">
 					<Button
 						variant="outline"
+						class="border-2 border-border shadow-md active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 						onclick={() => { mesocycleDrawerOpen = true; }}
 					>
 						<Plus class="mr-1.5 size-4" />
@@ -406,10 +407,10 @@
 
 <!-- FAB: Add Training Day -->
 {#if !loading && !error && program}
-	<div class="fixed right-4 bottom-6 z-50">
+	<div class="fixed right-4 bottom-24 z-50">
 		<Button
 			size="lg"
-			class="shadow-lg"
+			class="border-2 border-border shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 			onclick={() => { addDayDrawerOpen = true; }}
 		>
 			<Plus class="mr-2 size-5" />

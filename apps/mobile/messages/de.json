@@ -228,5 +228,11 @@
 	"onboarding_success": "Programm erfolgreich erstellt!",
 	"onboarding_error": "Fehler beim Erstellen des Programms",
 	"onboarding_skip": "Überspringen",
-	"onboarding_skip_description": "Du kannst später jederzeit ein Programm erstellen."
+	"onboarding_skip_description": "Du kannst später jederzeit ein Programm erstellen.",
+	"settings_title": "Einstellungen",
+	"settings_theme_label": "Erscheinungsbild",
+	"settings_theme_system": "System",
+	"settings_theme_light": "Hell",
+	"settings_theme_dark": "Dunkel",
+	"nav_settings": "Einstellungen"
 }

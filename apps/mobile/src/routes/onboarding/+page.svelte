@@ -75,8 +75,8 @@
 <section class="container mx-auto max-w-lg px-4 py-8">
 	<!-- Header -->
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold">{m.onboarding_title()}</h1>
-		<p class="text-muted-foreground mt-1">{m.onboarding_description()}</p>
+		<h1 class="text-3xl font-bold">{m.onboarding_title()}</h1>
+		<p class="text-muted-foreground mt-2 text-sm">{m.onboarding_description()}</p>
 	</div>
 
 	<!-- Template cards -->

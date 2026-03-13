@@ -38,12 +38,12 @@
 	}
 </script>
 
-<div class="bg-card border-t flex items-center justify-between px-4 py-3">
+<div class="bg-background border-t-2 border-border flex items-center justify-between px-4 py-3">
 	<div class="flex items-center gap-2">
 		<span class="text-muted-foreground text-xs font-medium uppercase tracking-wide">
 			{m.workout_rest_timer()}
 		</span>
-		<span class="font-mono text-lg font-semibold tabular-nums">
+		<span class="font-mono text-2xl font-bold tabular-nums">
 			{formatTime(elapsedSeconds)}
 		</span>
 	</div>

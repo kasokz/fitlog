@@ -104,7 +104,7 @@
 	<div class="mb-4 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">{m.exercises_title()}</h1>
 		{#if !loading && !error}
-			<span class="text-muted-foreground text-sm">
+			<span class="text-muted-foreground font-mono text-sm">
 				{m.exercises_count({ count: exercises.length })}
 			</span>
 		{/if}
@@ -112,7 +112,7 @@
 
 	<!-- Filters -->
 	{#if !loading && !error}
-		<div class="mb-4">
+		<div class="mb-4 border-2 border-border bg-card p-3 shadow-md">
 			<ExerciseFilters
 				bind:searchQuery
 				bind:selectedMuscleGroup
@@ -155,10 +155,10 @@
 
 <!-- FAB: Create Exercise -->
 {#if !loading && !error}
-	<div class="fixed right-4 bottom-6 z-50">
+	<div class="fixed right-4 bottom-24 z-50">
 		<Button
 			size="lg"
-			class="shadow-lg"
+			class="border-2 border-border shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 			onclick={() => { createDrawerOpen = true; }}
 		>
 			<Plus class="mr-2 size-5" />

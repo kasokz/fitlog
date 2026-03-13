@@ -16,11 +16,11 @@
 </script>
 
 <button type="button" class="w-full text-left" {onclick}>
-	<Card class="transition-colors active:bg-muted/50">
+	<Card class="border-2 border-border shadow-md transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
 		<CardContent class="flex items-center gap-3 p-3">
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-1.5">
-					<h3 class="truncate text-sm font-medium">{exercise.name}</h3>
+					<h3 class="truncate text-sm font-bold">{exercise.name}</h3>
 					{#if exercise.is_compound}
 						<Layers class="text-muted-foreground size-3.5 shrink-0" />
 					{/if}

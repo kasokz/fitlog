@@ -23,10 +23,10 @@
 	let { exerciseName, muscleGroup, sets = $bindable(), onconfirm, onadd, onremove }: Props = $props();
 </script>
 
-<Card>
+<Card class="border-2 border-border shadow-md">
 	<CardHeader class="pb-2">
 		<div class="flex items-center gap-2">
-			<CardTitle class="text-base">{exerciseName}</CardTitle>
+			<CardTitle class="text-base font-bold">{exerciseName}</CardTitle>
 			<Badge variant="secondary" class="text-xs">
 				{getMuscleGroupLabel(muscleGroup)}
 			</Badge>

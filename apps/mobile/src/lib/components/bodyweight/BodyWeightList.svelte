@@ -42,13 +42,13 @@
 
 <div class="space-y-2">
 	{#each entries as entry (entry.id)}
-		<Card>
+		<Card class="border-2 border-border shadow-md">
 			<CardContent class="flex items-center justify-between p-3">
 				<div>
-					<p class="text-sm font-medium">
+					<p class="text-sm font-bold font-mono">
 						{entry.weight_kg} {m.bodyweight_unit_kg()}
 					</p>
-					<p class="text-muted-foreground text-xs">
+					<p class="text-muted-foreground font-mono text-xs">
 						{formatDate(entry.date)}
 					</p>
 				</div>

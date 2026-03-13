@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { m } from '$lib/paraglide/messages.js';
 	import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@repo/ui/components/ui/empty';
 	import * as Drawer from '@repo/ui/components/ui/drawer';
 	import { Button } from '@repo/ui/components/ui/button';
-	import { ArrowLeft, Loader2, Scale, Plus } from '@lucide/svelte';
+	import { Loader2, Scale, Plus } from '@lucide/svelte';
 
 	import { getDb } from '$lib/db/database.js';
 	import { BodyWeightRepository } from '$lib/db/repositories/bodyweight.js';
@@ -70,16 +69,7 @@
 <section class="container mx-auto max-w-lg px-4 py-4">
 	<!-- Header -->
 	<div class="mb-4">
-		<Button
-			variant="ghost"
-			size="sm"
-			class="-ml-2"
-			onclick={() => goto('/')}
-		>
-			<ArrowLeft class="mr-1 size-4" />
-			{m.bodyweight_back()}
-		</Button>
-		<h1 class="mt-2 text-2xl font-bold">{m.bodyweight_title()}</h1>
+		<h1 class="text-2xl font-bold">{m.bodyweight_title()}</h1>
 	</div>
 
 	<!-- Content -->
@@ -111,10 +101,10 @@
 
 <!-- FAB: Add Weight -->
 {#if !loading && !error}
-	<div class="fixed right-4 bottom-6 z-50">
+	<div class="fixed right-4 bottom-24 z-50">
 		<Button
 			size="lg"
-			class="shadow-lg"
+			class="border-2 border-border shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 			onclick={() => { drawerOpen = true; }}
 		>
 			<Plus class="mr-2 size-5" />

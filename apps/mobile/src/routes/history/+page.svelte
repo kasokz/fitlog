@@ -2,8 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@repo/ui/components/ui/empty';
-	import { Button } from '@repo/ui/components/ui/button';
-	import { ArrowLeft, Loader2, CalendarX2 } from '@lucide/svelte';
+	import { Loader2, CalendarX2 } from '@lucide/svelte';
 
 	import { getDb } from '$lib/db/database.js';
 	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
@@ -41,16 +40,7 @@
 <section class="container mx-auto max-w-lg px-4 py-4">
 	<!-- Header -->
 	<div class="mb-4">
-		<Button
-			variant="ghost"
-			size="sm"
-			class="-ml-2"
-			onclick={() => goto('/')}
-		>
-			<ArrowLeft class="mr-1 size-4" />
-			{m.history_back()}
-		</Button>
-		<h1 class="mt-2 text-2xl font-bold">{m.history_title()}</h1>
+		<h1 class="text-2xl font-bold">{m.history_title()}</h1>
 	</div>
 
 	<!-- Content -->

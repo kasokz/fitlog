@@ -228,5 +228,6 @@
 	"onboarding_success": "Program created successfully!",
 	"onboarding_error": "Failed to create program",
 	"onboarding_skip": "Skip",
-	"onboarding_skip_description": "You can always create a program later."
+	"onboarding_skip_description": "You can always create a program later.",
+	"nav_settings": "Settings"
 }

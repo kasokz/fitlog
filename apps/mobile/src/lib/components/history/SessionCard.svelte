@@ -28,25 +28,25 @@
 </script>
 
 <button type="button" class="w-full text-left" {onclick}>
-	<Card class="transition-colors active:bg-muted/50">
+	<Card class="border-2 border-border shadow-md transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
 		<CardContent class="flex items-center gap-3 p-3">
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center justify-between">
-					<h3 class="truncate text-sm font-medium">{session.training_day_name}</h3>
-					<span class="text-muted-foreground text-xs">{formattedDate}</span>
+					<h3 class="truncate text-sm font-bold">{session.training_day_name}</h3>
+					<span class="text-muted-foreground font-mono text-xs">{formattedDate}</span>
 				</div>
 				<div class="mt-1.5 flex flex-wrap gap-1.5">
 					<Badge variant="secondary" class="text-xs">
 						<Dumbbell class="mr-1 size-3" />
-						{m.history_session_exercises({ count: session.exercise_count })}
+						<span class="font-mono">{m.history_session_exercises({ count: session.exercise_count })}</span>
 					</Badge>
 					<Badge variant="outline" class="text-xs">
-						{m.history_session_sets({ count: session.total_sets })}
+						<span class="font-mono">{m.history_session_sets({ count: session.total_sets })}</span>
 					</Badge>
 					{#if durationMinutes != null}
 						<Badge variant="outline" class="text-xs">
 							<Clock class="mr-1 size-3" />
-							{m.history_session_duration({ minutes: durationMinutes })}
+							<span class="font-mono">{m.history_session_duration({ minutes: durationMinutes })}</span>
 						</Badge>
 					{/if}
 				</div>

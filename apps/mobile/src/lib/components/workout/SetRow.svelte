@@ -3,6 +3,7 @@
 	import { Badge } from '@repo/ui/components/ui/badge';
 	import { Check, X } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { impactMedium } from '$lib/services/haptics.js';
 
 	import type { SetType } from '$lib/types/workout.js';
 
@@ -82,14 +83,14 @@
 </script>
 
 <div
-	class="flex flex-col gap-2 rounded-lg border p-3 transition-colors {set.completed
-		? 'bg-muted/50 border-muted'
+	class="flex flex-col gap-2 rounded-lg border-2 border-border p-3 transition-colors {set.completed
+		? 'bg-muted/50 opacity-75'
 		: 'bg-card'}"
 >
 	<!-- Top row: set number, type badge, actions -->
 	<div class="flex items-center justify-between gap-2">
 		<div class="flex items-center gap-2">
-			<span class="text-muted-foreground text-xs font-medium tabular-nums min-w-[2.5rem]">
+			<span class="text-muted-foreground font-mono text-xs font-medium tabular-nums min-w-[2.5rem]">
 				{m.workout_set_label({ number: set.set_number })}
 			</span>
 			<button
@@ -100,7 +101,7 @@
 			>
 				<Badge
 					variant={set.set_type === 'working' ? 'default' : 'secondary'}
-					class="text-xs select-none"
+					class="border border-border text-xs font-bold select-none"
 				>
 					{currentTypeLabel()}
 				</Badge>
@@ -122,7 +123,7 @@
 				variant={set.completed ? 'secondary' : 'default'}
 				size="sm"
 				class="size-7 p-0"
-				onclick={onconfirm}
+				onclick={() => { impactMedium(); onconfirm(); }}
 			>
 				<Check class="size-3.5" />
 				<span class="sr-only">{m.workout_confirm_set()}</span>

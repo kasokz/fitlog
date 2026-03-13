@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M001 — Core Training Engine
-**Active Slice:** S06 — Design Polish & Platform Builds
+**Active Slice:** S07 — i18n & Launch Readiness
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S06 (Design Polish & Platform Builds).
+Plan slice S07 (i18n & Launch Readiness).

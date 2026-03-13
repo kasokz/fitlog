@@ -53,14 +53,14 @@
 
 	<!-- Card content -->
 	<button type="button" class="min-w-0 flex-1 text-left" {onclick}>
-		<Card class="transition-colors active:bg-muted/50">
+		<Card class="border-2 border-border shadow-md transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
 			<CardContent class="flex items-center gap-3 p-3">
 				<div class="min-w-0 flex-1">
-					<h3 class="truncate text-sm font-medium">{trainingDay.name}</h3>
+					<h3 class="truncate text-sm font-bold">{trainingDay.name}</h3>
 					<div class="mt-1.5 flex flex-wrap gap-1.5">
 						<Badge variant="secondary" class="text-xs">
 							<Dumbbell class="mr-1 size-3" />
-							{m.programs_day_card_exercises_count({ count: exerciseCount })}
+							<span class="font-mono">{m.programs_day_card_exercises_count({ count: exerciseCount })}</span>
 						</Badge>
 					</div>
 				</div>
@@ -69,7 +69,7 @@
 					<Button
 						variant="default"
 						size="icon"
-						class="size-9 shrink-0"
+						class="size-9 shrink-0 border-2 border-border shadow-md active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 						onclick={(e: MouseEvent) => { e.stopPropagation(); onstartworkout(); }}
 					>
 						<Play class="size-4" />

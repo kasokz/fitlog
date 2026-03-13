@@ -69,12 +69,12 @@
 <div class="mb-4 flex flex-wrap items-center gap-3">
 	<div class="flex items-center gap-1.5 text-sm">
 		<Calendar class="text-muted-foreground size-4" />
-		<span>{formattedDate}</span>
+		<span class="font-mono">{formattedDate}</span>
 	</div>
 	{#if durationMinutes != null}
 		<div class="flex items-center gap-1.5 text-sm">
 			<Clock class="text-muted-foreground size-4" />
-			<span>{m.history_session_duration({ minutes: durationMinutes })}</span>
+			<span class="font-mono">{m.history_session_duration({ minutes: durationMinutes })}</span>
 		</div>
 	{/if}
 </div>
@@ -84,15 +84,15 @@
 <!-- Exercise groups -->
 <div class="space-y-4">
 	{#each exerciseGroups as group (group.exerciseId)}
-		<Card>
+		<Card class="border-2 border-border shadow-md">
 			<CardHeader class="pb-2">
-				<CardTitle class="text-base">{group.exerciseName}</CardTitle>
+				<CardTitle class="text-base font-bold">{group.exerciseName}</CardTitle>
 			</CardHeader>
 			<CardContent class="space-y-2">
 				{#each group.sets as set (set.id)}
-					<div class="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+					<div class="flex items-center gap-3 border-2 border-border bg-muted/50 p-3">
 						<!-- Set number -->
-						<span class="text-muted-foreground min-w-[2.5rem] text-xs font-medium tabular-nums">
+						<span class="text-muted-foreground min-w-[2.5rem] font-mono text-xs font-medium tabular-nums">
 							{m.history_detail_set_label({ number: set.set_number })}
 						</span>
 
@@ -105,22 +105,22 @@
 						</Badge>
 
 						<!-- Weight / Reps / RIR -->
-						<div class="flex flex-1 items-center justify-end gap-3 text-sm tabular-nums">
+						<div class="flex flex-1 items-center justify-end gap-3 font-mono text-sm tabular-nums">
 							{#if set.weight != null}
 								<span>
-									<span class="font-medium">{set.weight}</span>
+									<span class="font-bold">{set.weight}</span>
 									<span class="text-muted-foreground text-xs">{m.workout_kg_unit()}</span>
 								</span>
 							{/if}
 							{#if set.reps != null}
 								<span>
-									<span class="font-medium">{set.reps}</span>
+									<span class="font-bold">{set.reps}</span>
 									<span class="text-muted-foreground text-xs">{m.workout_reps()}</span>
 								</span>
 							{/if}
 							{#if set.rir != null && set.set_type !== 'warmup'}
 								<span>
-									<span class="font-medium">{set.rir}</span>
+									<span class="font-bold">{set.rir}</span>
 									<span class="text-muted-foreground text-xs">{m.workout_rir()}</span>
 								</span>
 							{/if}

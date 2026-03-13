@@ -7,10 +7,15 @@
 	import { untrack } from 'svelte';
 
 	import { isOnboardingCompleted } from '$lib/services/onboarding.js';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
 
 	let ready = $state(false);
+
+	const showBottomNav = $derived(
+		ready && page.url.pathname !== '/onboarding' && !page.url.pathname.startsWith('/workout/')
+	);
 
 	$effect(() => {
 		// Run once on mount — untrack reactive reads to prevent re-runs on navigation
@@ -36,9 +41,12 @@
 <Toaster />
 
 {#if ready}
-	<div class="flex min-h-screen flex-col">
-		<main class="flex-1">
+	<div class="flex min-h-screen flex-col pt-safe-top">
+		<main class="flex-1" class:pb-20={showBottomNav}>
 			{@render children()}
 		</main>
 	</div>
+	{#if showBottomNav}
+		<BottomNav />
+	{/if}
 {/if}

@@ -9,6 +9,7 @@
 	import { Button } from '@repo/ui/components/ui/button';
 	import { ArrowLeft, Loader2, SearchX, AlertTriangle, CheckCircle2 } from '@lucide/svelte';
 
+	import { notifySuccess } from '$lib/services/haptics.js';
 	import { getDb } from '$lib/db/database.js';
 	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
 	import { ProgramRepository } from '$lib/db/repositories/program.js';
@@ -271,6 +272,8 @@
 				durationSeconds
 			});
 
+			notifySuccess();
+
 			finishDialogOpen = false;
 			toast.success(m.workout_finish_success());
 
@@ -296,7 +299,7 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				class="-ml-2"
+				class="-ml-2 border-2 border-border shadow-md active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 				onclick={() => history.back()}
 			>
 				<ArrowLeft class="mr-1 size-4" />
@@ -319,7 +322,7 @@
 		</div>
 
 		{#if trainingDayName && !loading && !error && !notFound}
-			<h1 class="mt-2 text-lg font-semibold">{trainingDayName}</h1>
+			<h1 class="mt-2 text-2xl font-bold">{trainingDayName}</h1>
 		{/if}
 	</div>
 

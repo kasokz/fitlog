@@ -70,7 +70,7 @@ This milestone is complete only when all are true:
 - [x] **S05: Onboarding & Program Templates** `risk:medium` `depends:[S02]`
   > After this: First launch presents starter program templates (PPL, Upper/Lower, Full Body). User picks one and has a ready-to-use program with exercises, sets, and rep ranges pre-configured — training-ready in under 2 minutes.
 
-- [ ] **S06: Design Polish & Platform Builds** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
+- [x] **S06: Design Polish & Platform Builds** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
   > After this: All screens have polished neobrutalist design, haptic feedback on key actions, dark/light mode fully wired. iOS and Android native projects are scaffolded and the app runs on both platforms.
 
 - [ ] **S07: i18n & Launch Readiness** `risk:low` `depends:[S06]`

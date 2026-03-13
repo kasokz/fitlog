@@ -67,16 +67,16 @@
 		<Button
 			variant="ghost"
 			size="sm"
-			class="-ml-2"
+			class="-ml-2 border-2 border-border shadow-md active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 			onclick={() => goto('/history')}
 		>
 			<ArrowLeft class="mr-1 size-4" />
 			{m.history_back()}
 		</Button>
 		{#if trainingDayName && !loading && !error && !notFound}
-			<h1 class="mt-2 text-lg font-semibold">{trainingDayName}</h1>
+			<h1 class="mt-2 text-2xl font-bold">{trainingDayName}</h1>
 		{:else}
-			<h1 class="mt-2 text-lg font-semibold">{m.history_detail_title()}</h1>
+			<h1 class="mt-2 text-2xl font-bold">{m.history_detail_title()}</h1>
 		{/if}
 	</div>
 

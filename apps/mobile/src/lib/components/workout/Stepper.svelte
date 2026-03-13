@@ -2,6 +2,7 @@
 	import { Button } from '@repo/ui/components/ui/button';
 	import { Minus, Plus } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { selectionChanged } from '$lib/services/haptics.js';
 
 	interface Props {
 		value: number;
@@ -33,6 +34,7 @@
 		if (next !== value) {
 			value = next;
 			onchange?.(value);
+			selectionChanged();
 		}
 	}
 
@@ -41,6 +43,7 @@
 		if (next !== value) {
 			value = next;
 			onchange?.(value);
+			selectionChanged();
 		}
 	}
 

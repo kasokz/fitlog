@@ -23,18 +23,18 @@
 	{disabled}
 	onclick={() => onselect(template)}
 >
-	<Card class="transition-colors active:bg-muted/50 {disabled ? 'opacity-50' : ''}">
+	<Card class="border-2 border-border shadow-md transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none {disabled ? 'opacity-50' : ''}">
 		<CardContent class="flex items-center gap-4 p-4">
-			<div class="bg-primary/10 flex size-12 shrink-0 items-center justify-center rounded-xl">
+			<div class="bg-primary/10 flex size-12 shrink-0 items-center justify-center border-2 border-border">
 				<Dumbbell class="text-primary size-6" />
 			</div>
 			<div class="min-w-0 flex-1">
-				<h3 class="text-base font-semibold">{template.name}</h3>
+				<h3 class="text-base font-bold">{template.name}</h3>
 				<p class="text-muted-foreground mt-0.5 text-sm">{template.description}</p>
 				<div class="mt-2 flex flex-wrap gap-1.5">
 					<Badge variant="secondary" class="text-xs">
 						<Calendar class="mr-1 size-3" />
-						{m.onboarding_template_days_count({ count: dayCount })}
+						<span class="font-mono">{m.onboarding_template_days_count({ count: dayCount })}</span>
 					</Badge>
 				</div>
 			</div>
