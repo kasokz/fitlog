@@ -268,5 +268,13 @@
   "analytics_tab_frequency": "Frequency",
   "analytics_timerange_7d": "Last 7 days",
   "analytics_timerange_30d": "Last 30 days",
-  "analytics_timerange_90d": "Last 3 months"
+  "analytics_timerange_90d": "Last 3 months",
+  "premium_upgrade_title": "Unlock More Insights",
+  "premium_upgrade_description_full_charts": "Get access to all charts and analytics to better understand your training progress.",
+  "premium_upgrade_description_extended_history": "View the complete PR history for all exercises and track your progress in detail.",
+  "premium_upgrade_button": "Unlock Premium",
+  "premium_upgrade_coming_soon": "Coming soon",
+  "settings_premium_dev_label": "Premium (Dev)",
+  "settings_premium_active": "Active",
+  "settings_premium_inactive": "Inactive"
 }

@@ -12,6 +12,7 @@
 	import { notifySuccess, impactHeavy } from '$lib/services/haptics.js';
 	import { detectSessionPRs, type ExerciseGroup as PRExerciseGroup } from '$lib/services/analytics/sessionPRDetector.js';
 	import { loadProgressionSuggestions } from '$lib/services/analytics/progressionSuggestionLoader.js';
+	import { isPremiumUser } from '$lib/services/premium.js';
 	import type { ProgressionSuggestion } from '$lib/types/analytics.js';
 	import PRCelebrationToast from '$lib/components/workout/PRCelebrationToast.svelte';
 	import { getDb } from '$lib/db/database.js';
@@ -194,11 +195,20 @@
 				console.warn('[Workout] Deload banner detection failed:', deloadErr);
 			}
 
-			// Fire-and-forget: load progression suggestions after UI renders
-			const groupExerciseIds = groups.map((g) => g.exerciseId);
-			loadProgressionSuggestions(groupExerciseIds).then((suggestions) => {
-				progressionSuggestions = suggestions;
-			});
+			// Fire-and-forget: load progression suggestions after UI renders (premium only)
+			try {
+				const premium = await isPremiumUser();
+				if (premium) {
+					const groupExerciseIds = groups.map((g) => g.exerciseId);
+					loadProgressionSuggestions(groupExerciseIds).then((suggestions) => {
+						progressionSuggestions = suggestions;
+					});
+				} else {
+					console.log('[Workout] Premium: false, skipping progression suggestions');
+				}
+			} catch (premiumErr) {
+				console.warn('[Workout] Premium check failed, defaulting to free (no progression suggestions)', premiumErr);
+			}
 		} catch (err) {
 			console.error('[Workout] Session load failed:', err);
 			error = err instanceof Error ? err.message : String(err);

@@ -19,15 +19,18 @@
 		type ExerciseOption
 	} from '$lib/services/analytics/dashboardData.js';
 
+	import { isPremiumUser } from '$lib/services/premium.js';
 	import ExercisePickerSelect from '$lib/components/analytics/ExercisePickerSelect.svelte';
 	import TimeRangeSelect from '$lib/components/analytics/TimeRangeSelect.svelte';
 	import StrengthChart from '$lib/components/analytics/StrengthChart.svelte';
 	import VolumeChart from '$lib/components/analytics/VolumeChart.svelte';
 	import BodyWeightChart from '$lib/components/analytics/BodyWeightChart.svelte';
 	import FrequencySummary from '$lib/components/analytics/FrequencySummary.svelte';
+	import UpgradePrompt from '$lib/components/premium/UpgradePrompt.svelte';
 
 	// ── State ──
 
+	let premium = $state(false);
 	let exercises: ExerciseOption[] = $state([]);
 	let selectedExerciseId: string = $state('');
 	let timeRange: string = $state('90d');
@@ -66,11 +69,28 @@
 		return `${year}-${month}-${day}`;
 	}
 
-	// ── Init: load exercises ──
+	// ── Init: check premium status, then load exercises ──
 
 	$effect(() => {
-		loadExercises();
+		initDashboard();
 	});
+
+	async function initDashboard() {
+		try {
+			premium = await isPremiumUser();
+			console.log(`[Dashboard] premium: ${premium}`);
+		} catch (err) {
+			console.error('[Dashboard] Failed to check premium status, defaulting to free:', err);
+			premium = false;
+		}
+
+		// Free users are forced to 30d time range
+		if (!premium) {
+			timeRange = '30d';
+		}
+
+		await loadExercises();
+	}
 
 	async function loadExercises() {
 		try {
@@ -179,7 +199,7 @@
 			<div class="flex-1">
 				<ExercisePickerSelect {exercises} bind:value={selectedExerciseId} />
 			</div>
-			<TimeRangeSelect bind:value={timeRange} />
+			<TimeRangeSelect bind:value={timeRange} restrictTo30d={!premium} />
 		</div>
 
 		<!-- Data loading overlay -->
@@ -193,8 +213,10 @@
 			<Tabs.Root bind:value={activeTab}>
 				<Tabs.List class="mb-4 w-full">
 					<Tabs.Trigger value="strength">{m.analytics_tab_strength()}</Tabs.Trigger>
-					<Tabs.Trigger value="volume">{m.analytics_tab_volume()}</Tabs.Trigger>
-					<Tabs.Trigger value="bodyweight">{m.analytics_tab_bodyweight()}</Tabs.Trigger>
+					{#if premium}
+						<Tabs.Trigger value="volume">{m.analytics_tab_volume()}</Tabs.Trigger>
+						<Tabs.Trigger value="bodyweight">{m.analytics_tab_bodyweight()}</Tabs.Trigger>
+					{/if}
 					<Tabs.Trigger value="frequency">{m.analytics_tab_frequency()}</Tabs.Trigger>
 				</Tabs.List>
 
@@ -202,13 +224,15 @@
 					<StrengthChart data={strengthData} exerciseName={selectedExerciseName} />
 				</Tabs.Content>
 
-				<Tabs.Content value="volume">
-					<VolumeChart data={volumeData} />
-				</Tabs.Content>
+				{#if premium}
+					<Tabs.Content value="volume">
+						<VolumeChart data={volumeData} />
+					</Tabs.Content>
 
-				<Tabs.Content value="bodyweight">
-					<BodyWeightChart data={bodyWeightData} />
-				</Tabs.Content>
+					<Tabs.Content value="bodyweight">
+						<BodyWeightChart data={bodyWeightData} />
+					</Tabs.Content>
+				{/if}
 
 				<Tabs.Content value="frequency">
 					<FrequencySummary
@@ -217,6 +241,12 @@
 					/>
 				</Tabs.Content>
 			</Tabs.Root>
+
+			{#if !premium}
+				<div class="mt-4">
+					<UpgradePrompt feature="full_charts" />
+				</div>
+			{/if}
 		{/if}
 	{/if}
 </section>

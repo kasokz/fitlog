@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M002 — Analytics & Progression Intelligence
-**Active Slice:** S06 — Freemium Analytics Gate
+**Active Slice:** S07 — i18n — German & English for Analytics UI
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S06 (Freemium Analytics Gate).
+Plan slice S07 (i18n — German & English for Analytics UI).

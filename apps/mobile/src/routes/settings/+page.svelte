@@ -3,7 +3,22 @@
 	import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
 	import { userPrefersMode, setMode } from 'mode-watcher';
 	import * as ToggleGroup from '@repo/ui/components/ui/toggle-group';
+	import { Switch } from '@repo/ui/components/ui/switch';
 	import { Sun, Moon, Monitor, Globe } from '@lucide/svelte';
+	import { isPremiumUser, setPremiumStatus } from '$lib/services/premium.js';
+
+	let premiumActive = $state(false);
+
+	$effect(() => {
+		isPremiumUser().then((status) => {
+			premiumActive = status;
+		});
+	});
+
+	async function handlePremiumToggle(checked: boolean) {
+		premiumActive = checked;
+		await setPremiumStatus(checked);
+	}
 
 	function handleModeChange(value: string | undefined) {
 		if (value === 'system' || value === 'light' || value === 'dark') {
@@ -69,4 +84,20 @@
 			</ToggleGroup.Item>
 		</ToggleGroup.Root>
 	</div>
+
+	<!-- Premium Dev Toggle (dev mode only) -->
+	{#if import.meta.env.DEV}
+		<div class="space-y-3 mt-6">
+			<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.settings_premium_dev_label()}</h2>
+			<div class="flex items-center justify-between rounded-md border px-4 py-3">
+				<span class="text-sm font-medium">
+					{premiumActive ? m.settings_premium_active() : m.settings_premium_inactive()}
+				</span>
+				<Switch
+					checked={premiumActive}
+					onCheckedChange={handlePremiumToggle}
+				/>
+			</div>
+		</div>
+	{/if}
 </section>

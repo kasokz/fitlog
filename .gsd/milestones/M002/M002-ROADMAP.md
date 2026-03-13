@@ -70,7 +70,7 @@ This milestone is complete only when all are true:
 - [x] **S05: Deload Auto-Adjustment** `risk:low` `depends:[S01]`
   > After this: When a mesocycle reaches its deload week and the user starts a workout, pre-filled set weights are automatically reduced to ~60% of previous session values and volume is adjusted. A deload indicator banner shows on the workout screen.
 
-- [ ] **S06: Freemium Analytics Gate** `risk:low` `depends:[S02, S03, S04]`
+- [x] **S06: Freemium Analytics Gate** `risk:low` `depends:[S02, S03, S04]`
   > After this: Free users see a basic analytics summary (PR list for top 3 exercises, last-4-weeks volume snapshot) and hit a clear upgrade prompt when tapping into full charts, extended history, or progression suggestions. Premium users see everything. Gate is controlled by a local feature flag service.
 
 - [ ] **S07: i18n — German & English for Analytics UI** `risk:low` `depends:[S02, S03, S04, S05, S06]`

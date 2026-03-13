@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@repo/ui/components/ui/empty';
 	import { Button } from '@repo/ui/components/ui/button';
@@ -12,7 +11,9 @@
 	import { getPRHistory } from '$lib/services/analytics/prDetector.js';
 	import type { PR } from '$lib/types/analytics.js';
 
+	import { isPremiumUser } from '$lib/services/premium.js';
 	import PRHistoryCard from '$lib/components/history/PRHistoryCard.svelte';
+	import UpgradePrompt from '$lib/components/premium/UpgradePrompt.svelte';
 
 	// ── Types ──
 
@@ -21,20 +22,41 @@
 		prs: PR[];
 	}
 
+	// ── Constants ──
+
+	const FREE_EXERCISE_LIMIT = 3;
+
 	// ── State ──
 
-	let groups: ExercisePRGroup[] = $state([]);
+	let premium = $state(false);
+	let allGroups: ExercisePRGroup[] = $state([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+
+	// ── Derived ──
+
+	const groups = $derived(
+		premium ? allGroups : allGroups.slice(0, FREE_EXERCISE_LIMIT)
+	);
+
+	const hasMoreGroups = $derived(!premium && allGroups.length > FREE_EXERCISE_LIMIT);
 
 	// ── Data loading ──
 
 	async function loadPRHistory() {
 		try {
+			premium = await isPremiumUser();
+			console.log(`[PRHistory] premium: ${premium}`);
+		} catch (err) {
+			console.error('[PRHistory] Failed to check premium status, defaulting to free:', err);
+			premium = false;
+		}
+
+		try {
 			const exercises: ExerciseOption[] = await getExercisesWithHistory();
 
 			if (exercises.length === 0) {
-				groups = [];
+				allGroups = [];
 				return;
 			}
 
@@ -52,7 +74,7 @@
 			);
 
 			// Filter out exercises with no PRs
-			groups = results.filter((group) => group.prs.length > 0);
+			allGroups = results.filter((group) => group.prs.length > 0);
 		} catch (err) {
 			console.error('[PRHistory] Load failed:', err);
 			error = err instanceof Error ? err.message : String(err);
@@ -116,5 +138,11 @@
 				<PRHistoryCard exerciseName={group.exerciseName} prs={group.prs} />
 			{/each}
 		</div>
+
+		{#if hasMoreGroups}
+			<div class="mt-4">
+				<UpgradePrompt feature="extended_history" />
+			</div>
+		{/if}
 	{/if}
 </section>
