@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M004 — Cloud Sync & Platform
-**Active Slice:** S03 — Data Export (CSV/JSON)
+**Active Slice:** S04 — Sync Status UI + Account Settings
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S03 (Data Export (CSV/JSON)).
+Plan slice S04 (Sync Status UI + Account Settings).

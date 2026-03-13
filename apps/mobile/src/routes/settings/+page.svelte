@@ -7,13 +7,15 @@
 	import * as ToggleGroup from '@repo/ui/components/ui/toggle-group';
 	import { Switch } from '@repo/ui/components/ui/switch';
 	import { Button } from '@repo/ui/components/ui/button';
-	import { Sun, Moon, Monitor, Globe, RotateCcw, ExternalLink, LoaderCircle } from '@lucide/svelte';
+	import { Sun, Moon, Monitor, Globe, RotateCcw, ExternalLink, LoaderCircle, Download } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import { isPremiumUser, setPremiumStatus, getActiveProducts, revalidatePurchases } from '$lib/services/premium.js';
 	import type { PurchasedProduct } from '$lib/services/premium.js';
 	import { getAuthState, signOut as authSignOut } from '$lib/services/auth-client.js';
 	import type { AuthState } from '$lib/services/auth-client.js';
 	import { LogIn, LogOut, UserPlus } from '@lucide/svelte';
+	import { generateWorkoutCSV, generateBodyWeightCSV, generateFullJSON } from '$lib/services/export.js';
+	import { shareExportFile, shareMultipleExportFiles } from '$lib/services/export-file.js';
 	import {
 		isBillingSupported,
 		getProducts,
@@ -38,6 +40,59 @@
 	let hasActiveSubscription = $derived(
 		activeProducts.some((p) => p.productType === 'subs')
 	);
+
+	// Export state
+	let exporting = $state<'csv' | 'json' | null>(null);
+
+	async function handleExportCSV() {
+		if (exporting) return;
+		exporting = 'csv';
+		try {
+			const [workoutCSV, bodyWeightCSV] = await Promise.all([
+				generateWorkoutCSV(),
+				generateBodyWeightCSV()
+			]);
+			const timestamp = new Date().toISOString().slice(0, 10);
+			const success = await shareMultipleExportFiles([
+				{ filename: `fitlog-workouts-${timestamp}.csv`, content: workoutCSV, mimeType: 'text/csv' },
+				{ filename: `fitlog-bodyweight-${timestamp}.csv`, content: bodyWeightCSV, mimeType: 'text/csv' }
+			]);
+			if (success) {
+				toast.success(m.export_success());
+			} else {
+				toast.error(m.export_error({ error: 'Share cancelled or failed' }));
+			}
+		} catch (error) {
+			console.error('[Export] CSV export failed', error);
+			toast.error(m.export_error({ error: String(error) }));
+		} finally {
+			exporting = null;
+		}
+	}
+
+	async function handleExportJSON() {
+		if (exporting) return;
+		exporting = 'json';
+		try {
+			const json = await generateFullJSON();
+			const timestamp = new Date().toISOString().slice(0, 10);
+			const success = await shareExportFile(
+				`fitlog-export-${timestamp}.json`,
+				json,
+				'application/json'
+			);
+			if (success) {
+				toast.success(m.export_success());
+			} else {
+				toast.error(m.export_error({ error: 'Share cancelled or failed' }));
+			}
+		} catch (error) {
+			console.error('[Export] JSON export failed', error);
+			toast.error(m.export_error({ error: String(error) }));
+		} finally {
+			exporting = null;
+		}
+	}
 
 	// IAP test state (dev only, but declared unconditionally for simplicity)
 	let billingSupported: boolean | null = $state(null);
@@ -261,6 +316,39 @@
 				{m.settings_language_en()}
 			</ToggleGroup.Item>
 		</ToggleGroup.Root>
+	</div>
+
+	<!-- Export Section -->
+	<div class="space-y-3 mt-6">
+		<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.export_section_label()}</h2>
+		<div class="flex flex-col gap-2">
+			<Button
+				variant="outline"
+				class="w-full justify-center gap-2"
+				disabled={exporting !== null}
+				onclick={handleExportCSV}
+			>
+				{#if exporting === 'csv'}
+					<LoaderCircle class="size-4 animate-spin" />
+				{:else}
+					<Download class="size-4" />
+				{/if}
+				{m.export_csv_button()}
+			</Button>
+			<Button
+				variant="outline"
+				class="w-full justify-center gap-2"
+				disabled={exporting !== null}
+				onclick={handleExportJSON}
+			>
+				{#if exporting === 'json'}
+					<LoaderCircle class="size-4 animate-spin" />
+				{:else}
+					<Download class="size-4" />
+				{/if}
+				{m.export_json_button()}
+			</Button>
+		</div>
 	</div>
 
 	<!-- Account / Auth Section -->

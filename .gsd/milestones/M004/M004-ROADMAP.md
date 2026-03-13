@@ -66,7 +66,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Sync Protocol + Two-Way Sync** `risk:high` `depends:[S01]`
   > After this: Changes made in the mobile app (workouts, programs, body weight, etc.) push to the server. Changes from the server pull to the device. Seed exercises use deterministic UUIDs. Sync runs automatically after sign-in and on connectivity changes. Offline changes queue and sync when online. LWW conflict resolution handles concurrent edits. A second device signing into the same account receives all data.
 
-- [ ] **S03: Data Export (CSV/JSON)** `risk:low` `depends:[]`
+- [x] **S03: Data Export (CSV/JSON)** `risk:low` `depends:[]`
   > After this: User can export complete workout history as CSV or JSON from a new export screen in Settings. Files shared via native share sheet. Pure client-side — reads from local SQLite, no server dependency.
 
 - [ ] **S04: Sync Status UI + Account Settings** `risk:low` `depends:[S01, S02]`
