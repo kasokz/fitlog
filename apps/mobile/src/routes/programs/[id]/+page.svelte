@@ -12,6 +12,7 @@
 	import { getDb } from '$lib/db/database.js';
 	import { ProgramRepository } from '$lib/db/repositories/program.js';
 	import { ExerciseRepository } from '$lib/db/repositories/exercise.js';
+	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
 	import type { ProgramWithDays, Mesocycle } from '$lib/types/program.js';
 
 	import TrainingDayCard from '$lib/components/programs/TrainingDayCard.svelte';
@@ -184,6 +185,76 @@
 			toast.error(m.programs_assignment_error());
 		}
 	}
+
+	// ── Start Workout Handler ──
+
+	async function handleStartWorkout(trainingDayId: string) {
+		try {
+			// Check for existing in-progress session
+			const existing = await WorkoutRepository.getInProgressSession();
+			if (existing) {
+				toast.info(m.workout_session_in_progress(), {
+					action: {
+						label: m.workout_resume(),
+						onClick: () => goto(`/workout/${existing.id}`)
+					}
+				});
+				return;
+			}
+
+			// Create new session
+			const session = await WorkoutRepository.createSession({
+				program_id: programId,
+				training_day_id: trainingDayId,
+				mesocycle_id: mesocycle?.id ?? null,
+				mesocycle_week: mesocycle?.current_week ?? null
+			});
+
+			console.log('[Workout] Session started from program detail', {
+				sessionId: session.id,
+				trainingDayId,
+				programId
+			});
+
+			// Pre-populate sets from last completed session for this day
+			const lastSession = await WorkoutRepository.getLastSessionForDay(trainingDayId);
+			if (lastSession && lastSession.sets.length > 0) {
+				for (const prevSet of lastSession.sets) {
+					await WorkoutRepository.addSet(session.id, {
+						exercise_id: prevSet.exercise_id,
+						assignment_id: prevSet.assignment_id,
+						set_type: prevSet.set_type,
+						weight: prevSet.weight,
+						reps: prevSet.reps,
+						rir: prevSet.rir
+					});
+				}
+			} else {
+				// First time — create default sets from template assignments
+				const day = program?.trainingDays.find((d) => d.id === trainingDayId);
+				if (day) {
+					for (const assignment of day.assignments) {
+						const targetSets = assignment.target_sets ?? 3;
+						for (let i = 0; i < targetSets; i++) {
+							await WorkoutRepository.addSet(session.id, {
+								exercise_id: assignment.exercise_id,
+								assignment_id: assignment.id,
+								set_type: 'working',
+								weight: 0,
+								reps: assignment.min_reps ?? 0,
+								rir: 2
+							});
+						}
+					}
+				}
+			}
+
+			goto(`/workout/${session.id}`);
+		} catch (err) {
+			console.error('[Workout] Start workout failed:', err);
+			toast.error(m.workout_start_error());
+		}
+	}
 </script>
 
 <section class="container mx-auto max-w-lg px-4 py-4">
@@ -247,6 +318,7 @@
 								onmovedown={() => handleMoveDown(index)}
 								onremove={() => handleRemove(day.id)}
 								onclick={() => {}}
+								onstartworkout={() => handleStartWorkout(day.id)}
 							/>
 
 							<!-- Inline exercise assignments -->

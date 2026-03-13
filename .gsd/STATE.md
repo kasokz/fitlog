@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M001 — Core Training Engine
-**Active Slice:** S03 — Workout Logging
+**Active Slice:** S04 — Workout History & Body Weight
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S03 (Workout Logging).
+Plan slice S04 (Workout History & Body Weight).

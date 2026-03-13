@@ -61,7 +61,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Programs & Mesocycles** `risk:medium` `depends:[S01]`
   > After this: User can create a training program with named training days, assign exercises with target rep ranges and set counts, and define a mesocycle with week count and deload week position.
 
-- [ ] **S03: Workout Logging** `risk:high` `depends:[S01,S02]`
+- [x] **S03: Workout Logging** `risk:high` `depends:[S01,S02]`
   > After this: User can start a workout from a program day, log sets with weight/reps/RIR using tap-tap-done UX (pre-filled from last session), mark set types, use an optional rest timer, and see workout duration — all persisted to SQLite.
 
 - [ ] **S04: Workout History & Body Weight** `risk:low` `depends:[S01,S03]`

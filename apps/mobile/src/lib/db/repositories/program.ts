@@ -633,7 +633,7 @@ export const ProgramRepository = {
 	 */
 	async getMesocycleByProgramId(programId: string): Promise<Mesocycle | null> {
 		const rows = await dbQuery<MesocycleRow>(
-			'SELECT * FROM mesocycles WHERE program_id = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1',
+			'SELECT * FROM mesocycles WHERE program_id = ? AND deleted_at IS NULL ORDER BY created_at DESC, rowid DESC LIMIT 1',
 			[programId]
 		);
 		return rows.length > 0 ? rowToMesocycle(rows[0]) : null;

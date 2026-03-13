@@ -2,7 +2,7 @@
 	import { Badge } from '@repo/ui/components/ui/badge';
 	import { Button } from '@repo/ui/components/ui/button';
 	import { Card, CardContent } from '@repo/ui/components/ui/card';
-	import { ChevronUp, ChevronDown, Trash2, Dumbbell } from '@lucide/svelte';
+	import { ChevronUp, ChevronDown, Trash2, Dumbbell, Play } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
 	import type { TrainingDayWithAssignments } from '$lib/types/program.js';
@@ -15,13 +15,15 @@
 		onmovedown: () => void;
 		onremove: () => void;
 		onclick: () => void;
+		onstartworkout?: () => void;
 	}
 
-	const { trainingDay, index, total, onmoveup, onmovedown, onremove, onclick }: Props = $props();
+	const { trainingDay, index, total, onmoveup, onmovedown, onremove, onclick, onstartworkout }: Props = $props();
 
 	const isFirst = $derived(index === 0);
 	const isLast = $derived(index === total - 1);
 	const exerciseCount = $derived(trainingDay.assignments.length);
+	const hasExercises = $derived(exerciseCount > 0);
 </script>
 
 <div class="flex items-center gap-2">
@@ -62,6 +64,18 @@
 						</Badge>
 					</div>
 				</div>
+
+				{#if hasExercises && onstartworkout}
+					<Button
+						variant="default"
+						size="icon"
+						class="size-9 shrink-0"
+						onclick={(e: MouseEvent) => { e.stopPropagation(); onstartworkout(); }}
+					>
+						<Play class="size-4" />
+						<span class="sr-only">{m.workout_start()}</span>
+					</Button>
+				{/if}
 			</CardContent>
 		</Card>
 	</button>

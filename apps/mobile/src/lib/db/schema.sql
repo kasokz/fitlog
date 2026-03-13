@@ -1,4 +1,4 @@
--- FitLog database schema v2
+-- FitLog database schema v3
 
 -- Migration tracking
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -80,3 +80,45 @@ CREATE TABLE IF NOT EXISTS mesocycles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_mesocycles_program_id ON mesocycles(program_id);
+
+-- Workout Sessions
+CREATE TABLE IF NOT EXISTS workout_sessions (
+  id TEXT PRIMARY KEY,
+  program_id TEXT NOT NULL,
+  training_day_id TEXT NOT NULL,
+  mesocycle_id TEXT,
+  mesocycle_week INTEGER,
+  status TEXT NOT NULL DEFAULT 'in_progress',
+  started_at TEXT NOT NULL,
+  completed_at TEXT,
+  duration_seconds INTEGER,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_training_day_id ON workout_sessions(training_day_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_started_at ON workout_sessions(started_at);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_status ON workout_sessions(status);
+
+-- Workout Sets
+CREATE TABLE IF NOT EXISTS workout_sets (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  exercise_id TEXT NOT NULL,
+  assignment_id TEXT,
+  set_number INTEGER NOT NULL,
+  set_type TEXT NOT NULL DEFAULT 'working',
+  weight REAL,
+  reps INTEGER,
+  rir INTEGER,
+  completed INTEGER NOT NULL DEFAULT 0,
+  rest_seconds INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_workout_sets_session_id ON workout_sets(session_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sets_exercise_id ON workout_sets(exercise_id);

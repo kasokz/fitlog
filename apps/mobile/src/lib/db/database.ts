@@ -17,7 +17,7 @@ import { seedExercises } from './seed/exercises.js';
 // ── Constants ──
 
 const DB_NAME = 'fitlog';
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 // ── State ──
 
