@@ -72,7 +72,7 @@ This milestone is complete only when all are true:
 - [x] **S04: Sync Status UI + Account Settings** `risk:low` `depends:[S01, S02]`
   > After this: Sync status indicator shows last sync time, in-progress state, and errors. Account section in Settings shows signed-in user info with sign-out option. Sync errors surface actionable messages.
 
-- [ ] **S05: i18n — German (base) + English** `risk:low` `depends:[S01, S02, S03, S04]`
+- [x] **S05: i18n — German (base) + English** `risk:low` `depends:[S01, S02, S03, S04]`
   > After this: All new UI from S01–S04 (auth screens, sync status, export, account settings) has German and English translations with zero key drift.
 
 ## Boundary Map
