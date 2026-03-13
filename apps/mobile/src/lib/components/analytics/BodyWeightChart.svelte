@@ -15,6 +15,7 @@
 	import { Weight } from '@lucide/svelte';
 
 	import type { BodyWeightChartPoint } from '$lib/services/analytics/dashboardData.js';
+	import { getBcp47Locale } from '$lib/utils/locale.js';
 
 	interface Props {
 		data: BodyWeightChartPoint[];
@@ -62,7 +63,7 @@
 						spline: { curve: curveNatural, motion: 'tween', strokeWidth: 2 },
 						xAxis: {
 							format: (v: Date) => {
-								return v.toLocaleDateString('de-DE', {
+								return v.toLocaleDateString(getBcp47Locale(), {
 									month: 'short',
 									day: 'numeric'
 								});

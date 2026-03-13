@@ -9,6 +9,7 @@
 	import { TrendingUp } from '@lucide/svelte';
 
 	import type { StrengthChartPoint } from '$lib/services/analytics/dashboardData.js';
+	import { getBcp47Locale } from '$lib/utils/locale.js';
 
 	interface Props {
 		data: StrengthChartPoint[];
@@ -55,7 +56,7 @@
 						spline: { curve: curveNatural, motion: 'tween', strokeWidth: 2 },
 						xAxis: {
 							format: (v: Date) => {
-								return v.toLocaleDateString('de-DE', {
+								return v.toLocaleDateString(getBcp47Locale(), {
 									month: 'short',
 									day: 'numeric'
 								});

@@ -73,7 +73,7 @@ This milestone is complete only when all are true:
 - [x] **S06: Freemium Analytics Gate** `risk:low` `depends:[S02, S03, S04]`
   > After this: Free users see a basic analytics summary (PR list for top 3 exercises, last-4-weeks volume snapshot) and hit a clear upgrade prompt when tapping into full charts, extended history, or progression suggestions. Premium users see everything. Gate is controlled by a local feature flag service.
 
-- [ ] **S07: i18n — German & English for Analytics UI** `risk:low` `depends:[S02, S03, S04, S05, S06]`
+- [x] **S07: i18n — German & English for Analytics UI** `risk:low` `depends:[S02, S03, S04, S05, S06]`
   > After this: All new analytics UI text (dashboard labels, chart titles, PR messages, progression suggestions, deload indicators, freemium prompts) exists in de.json and en.json with zero key drift. Keys are synchronized and paraglide compiles cleanly.
 
 ## Boundary Map

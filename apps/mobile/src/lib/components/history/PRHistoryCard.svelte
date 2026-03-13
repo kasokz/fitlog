@@ -9,6 +9,7 @@
 	} from '@repo/ui/components/ui/collapsible';
 	import { Weight, Repeat, TrendingUp, ChevronDown } from '@lucide/svelte';
 	import type { PR } from '$lib/types/analytics.js';
+	import { getBcp47Locale } from '$lib/utils/locale.js';
 
 	interface Props {
 		exerciseName: string;
@@ -21,7 +22,7 @@
 
 	// ── Date formatting ──
 
-	const dateFormatter = new Intl.DateTimeFormat('de-DE', {
+	const dateFormatter = new Intl.DateTimeFormat(getBcp47Locale(), {
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric'

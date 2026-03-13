@@ -10,6 +10,7 @@
 	import { BarChart3 } from '@lucide/svelte';
 
 	import type { VolumeChartPoint } from '$lib/services/analytics/dashboardData.js';
+	import { getBcp47Locale } from '$lib/utils/locale.js';
 
 	interface Props {
 		data: VolumeChartPoint[];
@@ -57,7 +58,7 @@
 						},
 						xAxis: {
 							format: (v: Date) => {
-								return v.toLocaleDateString('de-DE', {
+								return v.toLocaleDateString(getBcp47Locale(), {
 									month: 'short',
 									day: 'numeric'
 								});
