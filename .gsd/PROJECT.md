@@ -12,7 +12,7 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 
 **M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), and M003 (Monetization & Premium Features) are complete.** The app has:
 
-- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v5 with 8 tables + composite analytics index, repository pattern with Zod v4 validation, 428 unit tests passing
+- **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v6 with 8 tables + composite analytics index + deterministic seed exercise UUIDs, repository pattern with Zod v4 validation, 483 mobile + 26 web unit tests passing
 - **Exercise Library:** 55 curated exercises with search/filter by muscle group and equipment, custom exercise creation
 - **Program Management:** Normalized 4-table model (programs, training_days, exercise_assignments, mesocycles) with full CRUD
 - **Program Templates:** 8 total (3 free for onboarding + 5 premium behind template pack purchase), browsable via TemplateBrowserDrawer on Programs page
@@ -31,6 +31,7 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **Premium Service:** Granular product-tracking via PurchasedProduct map in Preferences. Feature-to-product mapping, subscription expiry checks, launch-time revalidation on mount + resume
 - **Paywall UX:** PaywallDrawer with dynamic store pricing, subscription terms, Apple-compliant cancellation instructions. UpgradePrompt on premium-gated features. Restore Purchases and Manage Subscription in Settings
 - **Store Submission:** Complete fastlane infrastructure (Fastfile, Appfile, Matchfile) for com.fitlog.app. 40+ metadata files for iOS/Android in de-DE + en-US. Screenshot frameit pipeline. 30-check pre-submission validation script. E2E verification runbook. Human-gated device testing and submission pending
+- **Cloud Sync:** Two-way sync protocol (push/pull with LWW per row) between mobile SQLite and server Postgres. Automatic sync on sign-in (full), resume, and connectivity restore. Deterministic UUID v5 for seed exercises. Schema v6 migration re-IDs existing data.
 - **i18n:** 365 synchronized keys in German (base) and English via Paraglide
 - **Platform:** iOS and Android native projects scaffolded via Capacitor 8, builds to static output
 
@@ -61,4 +62,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M001: Core Training Engine — Workout logging, exercise library, programs, mesocycles, offline SQLite, onboarding, striking UI, iOS + Android builds, i18n (de/en)
 - [x] M002: Analytics & Progression Intelligence — Strength curves, 1RM estimation, PR tracking, volume trends, RIR-driven progression suggestions, deload automation, freemium gate, i18n (de/en)
 - [x] M003: Monetization & Premium Features — IAP/subscription infra, purchase state management, paywall UX, premium templates, store listing optimization, end-to-end integration + store submission, i18n key sync. All 7 slices complete.
-- [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export. **S01 complete:** SvelteKit API with Better Auth + Drizzle + Postgres, mobile auth service, sign-up/sign-in UI
+- [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export. **S01–S02 complete:** SvelteKit API with Better Auth + Drizzle + Postgres, mobile auth service, sign-up/sign-in UI, two-way sync protocol (push/pull with LWW), deterministic seed exercise UUIDs (schema v6), automatic sync triggers

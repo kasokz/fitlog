@@ -124,8 +124,8 @@ export const BodyWeightRepository = {
 	async deleteEntry(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 		const result = await dbExecute(
-			'UPDATE body_weight_entries SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-			[now, id]
+			'UPDATE body_weight_entries SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+			[now, now, id]
 		);
 		if (result.rowsAffected > 0) {
 			console.log(`[BodyWeight] Soft-deleted entry ${id}`);

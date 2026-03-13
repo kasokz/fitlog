@@ -29,6 +29,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@capacitor/network':
+        specifier: ^8.0.1
+        version: 8.0.1(@capacitor/core@8.2.0)
       '@dnd-kit/dom':
         specifier: ^0.3.2
         version: 0.3.2
@@ -181,6 +184,9 @@ importers:
       '@lucide/svelte':
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.53.11)
+      '@repo/dev-env':
+        specifier: workspace:*
+        version: link:../../packages/dev-env
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -235,6 +241,8 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@types/node@25.4.0)(jsdom@28.1.0(@noble/hashes@2.0.1))(vite@7.3.1(@types/node@25.4.0)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0))
+
+  packages/dev-env: {}
 
   packages/eslint-config:
     devDependencies:
@@ -656,6 +664,11 @@ packages:
     resolution: {integrity: sha512-X2/VtM4qP/R1SM0VQ5W/VotEc6PS/KTooD33EijsfAHWBdee+xmBapW8SeNLnu16wJ+tsfWlvtipaJEyfKbRKQ==}
     peerDependencies:
       '@capacitor/core': ^8.2.0
+
+  '@capacitor/network@8.0.1':
+    resolution: {integrity: sha512-9xK/FHFmzKGanB6BdoSZOzXk8vF0OFVQSQ4PAsIrzAzLuXHryO317qy8dcHVpgxYeuZq2noI0My9z1DvVDi/9w==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/preferences@8.0.1':
     resolution: {integrity: sha512-T6no3ebi79XJCk91U3Jp/liJUwgBdvHR+s6vhvPkPxSuch7z3zx5Rv1bdWM6sWruNx+pViuEGqZvbfCdyBvcHQ==}
@@ -5992,6 +6005,10 @@ snapshots:
       '@capacitor/core': 8.2.0
 
   '@capacitor/ios@8.2.0(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
+
+  '@capacitor/network@8.0.1(@capacitor/core@8.2.0)':
     dependencies:
       '@capacitor/core': 8.2.0
 

@@ -345,8 +345,8 @@ export const ProgramRepository = {
 	async softDeleteProgram(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 		const result = await dbExecute(
-			'UPDATE programs SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-			[now, id]
+			'UPDATE programs SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+			[now, now, id]
 		);
 		return result.rowsAffected > 0;
 	},
@@ -438,8 +438,8 @@ export const ProgramRepository = {
 	async removeTrainingDay(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 		const result = await dbExecute(
-			'UPDATE training_days SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-			[now, id]
+			'UPDATE training_days SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+			[now, now, id]
 		);
 		return result.rowsAffected > 0;
 	},
@@ -568,8 +568,8 @@ export const ProgramRepository = {
 	async removeExerciseAssignment(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 		const result = await dbExecute(
-			'UPDATE exercise_assignments SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-			[now, id]
+			'UPDATE exercise_assignments SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+			[now, now, id]
 		);
 		return result.rowsAffected > 0;
 	},

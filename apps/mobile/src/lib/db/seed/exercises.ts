@@ -10,6 +10,7 @@
 import { CapgoCapacitorFastSql } from '@capgo/capacitor-fast-sql';
 
 import type { Equipment, MuscleGroup } from '../../types/exercise.js';
+import { uuidv5 } from '../../utils/uuid-v5.js';
 
 // ── Seed exercise shape ──
 
@@ -511,7 +512,7 @@ export async function seedExercises(database: string): Promise<void> {
 		const now = new Date().toISOString();
 
 		for (const exercise of SEED_EXERCISES) {
-			const id = crypto.randomUUID();
+			const id = await uuidv5(exercise.name);
 			const secondaryJson = exercise.secondary_muscle_groups.length
 				? JSON.stringify(exercise.secondary_muscle_groups)
 				: null;

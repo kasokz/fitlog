@@ -22,7 +22,7 @@ import { Preferences } from '@capacitor/preferences';
  * In local development, this points to the local dev server.
  * For production, configure per-environment.
  */
-const API_BASE_URL = 'http://localhost:5173';
+export const API_BASE_URL = 'http://localhost:5173';
 
 // ── Preferences Keys ──
 

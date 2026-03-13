@@ -8,7 +8,9 @@
 
 	import { isOnboardingCompleted } from '$lib/services/onboarding.js';
 	import { revalidatePurchases } from '$lib/services/premium.js';
+	import { incrementalSync } from '$lib/services/sync.js';
 	import { App } from '@capacitor/app';
+	import { Network } from '@capacitor/network';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
@@ -38,18 +40,29 @@
 					ready = true;
 					// Fire-and-forget: revalidate purchases on mount after app is ready
 					revalidatePurchases().catch(() => {});
+					// Fire-and-forget: incremental sync on mount (skips silently if not signed in)
+					incrementalSync().catch(() => {});
 				}
 			})();
 		});
 	});
 
-	// Revalidate purchases when app resumes from background
+	// Revalidate purchases and sync when app resumes from background
 	const resumeHandle = App.addListener('resume', () => {
 		revalidatePurchases().catch(() => {});
+		incrementalSync().catch(() => {});
+	});
+
+	// Incremental sync when connectivity is restored
+	const networkHandle = Network.addListener('networkStatusChange', (status) => {
+		if (status.connected) {
+			incrementalSync().catch(() => {});
+		}
 	});
 
 	onDestroy(() => {
 		resumeHandle.then((handle) => handle.remove());
+		networkHandle.then((handle) => handle.remove());
 	});
 </script>
 

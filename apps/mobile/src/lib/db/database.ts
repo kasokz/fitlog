@@ -11,13 +11,14 @@
 import { CapgoCapacitorFastSql } from '@capgo/capacitor-fast-sql';
 import type { SQLResult, SQLValue } from '@capgo/capacitor-fast-sql';
 
+import { migrateV6 } from './migrations/v6-deterministic-exercise-ids.js';
 import SCHEMA_SQL from './schema.sql?raw';
 import { seedExercises } from './seed/exercises.js';
 
 // ── Constants ──
 
 const DB_NAME = 'fitlog';
-const CURRENT_SCHEMA_VERSION = 5;
+const CURRENT_SCHEMA_VERSION = 6;
 
 // ── State ──
 
@@ -94,6 +95,11 @@ async function applySchema(): Promise<void> {
 				`Schema migration failed: ${error instanceof Error ? error.message : String(error)}. Statement: ${statement}`
 			);
 		}
+	}
+
+	// ── Code-based migrations (run after DDL) ──
+	if (currentVersion < 6) {
+		await migrateV6(DB_NAME);
 	}
 
 	// Record the migration

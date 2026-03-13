@@ -11,6 +11,7 @@
 
 	import { signInSchema } from '$lib/schemas/auth.js';
 	import { signIn } from '$lib/services/auth-client.js';
+	import { fullSync } from '$lib/services/sync.js';
 
 	let submitting = $state(false);
 
@@ -28,6 +29,8 @@
 				if (result.success) {
 					toast.success(m.auth_signin_success());
 					await goto('/programs');
+					// Fire-and-forget: full sync after sign-in (runs in background)
+					fullSync().catch(() => {});
 				} else {
 					toast.error(result.error ?? m.auth_signin_error());
 				}

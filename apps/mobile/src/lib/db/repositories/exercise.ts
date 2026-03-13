@@ -269,8 +269,8 @@ export const ExerciseRepository = {
 	async softDelete(id: string): Promise<boolean> {
 		const now = new Date().toISOString();
 		const result = await dbExecute(
-			'UPDATE exercises SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL',
-			[now, id]
+			'UPDATE exercises SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+			[now, now, id]
 		);
 		return result.rowsAffected > 0;
 	},
