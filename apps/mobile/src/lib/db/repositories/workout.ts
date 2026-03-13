@@ -18,6 +18,8 @@ import type {
 	SetInsert,
 	SetUpdate,
 	SessionInsert,
+	CompletedSessionSummary,
+	SessionDetailWithNames,
 	WorkoutSession,
 	WorkoutSessionWithSets,
 	WorkoutSet
@@ -340,6 +342,85 @@ export const WorkoutRepository = {
 		return {
 			...session,
 			sets: setRows.map(rowToSet)
+		};
+	},
+
+	/**
+	 * Get paginated list of completed sessions with training day name, exercise count, and set count.
+	 * Used for workout history list views.
+	 */
+	async getCompletedSessions(limit = 20, offset = 0): Promise<CompletedSessionSummary[]> {
+		const rows = await dbQuery<{
+			id: string;
+			started_at: string;
+			completed_at: string;
+			duration_seconds: number | null;
+			training_day_name: string;
+			exercise_count: number;
+			total_sets: number;
+		}>(
+			`SELECT
+				s.id,
+				s.started_at,
+				s.completed_at,
+				s.duration_seconds,
+				td.name AS training_day_name,
+				(SELECT COUNT(DISTINCT ws.exercise_id) FROM workout_sets ws WHERE ws.session_id = s.id AND ws.deleted_at IS NULL) AS exercise_count,
+				(SELECT COUNT(*) FROM workout_sets ws WHERE ws.session_id = s.id AND ws.deleted_at IS NULL) AS total_sets
+			FROM workout_sessions s
+			JOIN training_days td ON td.id = s.training_day_id
+			WHERE s.status = ? AND s.deleted_at IS NULL
+			ORDER BY s.completed_at DESC, s.rowid DESC
+			LIMIT ? OFFSET ?`,
+			[SessionStatus.COMPLETED, limit, offset]
+		);
+
+		return rows.map((row) => ({
+			id: row.id,
+			started_at: row.started_at,
+			completed_at: row.completed_at,
+			duration_seconds: row.duration_seconds,
+			training_day_name: row.training_day_name,
+			exercise_count: row.exercise_count,
+			total_sets: row.total_sets
+		}));
+	},
+
+	/**
+	 * Get session detail with sets and a map of exercise IDs to exercise names.
+	 * Returns null if session not found.
+	 */
+	async getSessionDetail(id: string): Promise<SessionDetailWithNames | null> {
+		const session = await this.getSessionById(id);
+		if (!session) return null;
+
+		// Collect unique exercise IDs from sets
+		const exerciseIds = [...new Set(session.sets.map((s) => s.exercise_id))];
+
+		const exerciseNames: Record<string, string> = {};
+
+		if (exerciseIds.length > 0) {
+			const placeholders = exerciseIds.map(() => '?').join(', ');
+			const exerciseRows = await dbQuery<{ id: string; name: string }>(
+				`SELECT id, name FROM exercises WHERE id IN (${placeholders})`,
+				exerciseIds
+			);
+
+			for (const row of exerciseRows) {
+				exerciseNames[row.id] = row.name;
+			}
+
+			// Mark unknown/deleted exercises
+			for (const eid of exerciseIds) {
+				if (!exerciseNames[eid]) {
+					exerciseNames[eid] = 'Unknown Exercise';
+				}
+			}
+		}
+
+		return {
+			...session,
+			exerciseNames
 		};
 	},
 

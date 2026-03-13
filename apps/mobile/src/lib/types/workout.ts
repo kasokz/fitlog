@@ -66,6 +66,22 @@ export interface WorkoutSessionWithSets extends WorkoutSession {
 	sets: WorkoutSet[];
 }
 
+/** Summary of a completed workout session for history list views. */
+export interface CompletedSessionSummary {
+	id: UUID;
+	started_at: string;
+	completed_at: string;
+	duration_seconds: number | null;
+	training_day_name: string;
+	exercise_count: number;
+	total_sets: number;
+}
+
+/** Session with sets plus a map of exercise IDs to exercise names. */
+export interface SessionDetailWithNames extends WorkoutSessionWithSets {
+	exerciseNames: Record<string, string>;
+}
+
 // ── Zod Schemas ──
 
 const sessionStatusSchema = z.enum(['in_progress', 'completed', 'cancelled']);

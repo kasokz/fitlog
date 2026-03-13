@@ -48,7 +48,7 @@ describe('database module', () => {
 			);
 
 			expect(rows).toHaveLength(1);
-			expect(rows[0].version).toBe(3);
+			expect(rows[0].version).toBe(4);
 			expect(rows[0].applied_at).toBeTruthy();
 		});
 
@@ -163,7 +163,7 @@ describe('database module', () => {
 			await getDb();
 
 			const logMessages = consoleSpy.mock.calls.map((c) => c[0]);
-			expect(logMessages).toContain('[DB] Schema up to date {"version":3}');
+			expect(logMessages).toContain('[DB] Schema up to date {"version":4}');
 
 			consoleSpy.mockRestore();
 		});

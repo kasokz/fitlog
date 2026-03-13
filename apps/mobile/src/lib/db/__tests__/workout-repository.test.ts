@@ -8,6 +8,7 @@ setupMockDatabase();
 const { getDb, dbExecute, _resetForTesting } = await import('../database.js');
 const { WorkoutRepository } = await import('../repositories/workout.js');
 const { ProgramRepository } = await import('../repositories/program.js');
+const { ExerciseRepository } = await import('../repositories/exercise.js');
 const { SessionStatus, SetType } = await import('../../types/workout.js');
 
 // ── Helpers ──
@@ -31,6 +32,7 @@ async function clearAll() {
 	await dbExecute('DELETE FROM training_days');
 	await dbExecute('DELETE FROM mesocycles');
 	await dbExecute('DELETE FROM programs');
+	await dbExecute('DELETE FROM exercises');
 }
 
 /** Seed a program with a training day for workout tests */
@@ -478,6 +480,166 @@ describe('WorkoutRepository', () => {
 			expect(exercise2Sets).toHaveLength(1);
 			expect(exercise2Sets[0].set_number).toBe(1);
 			expect(exercise2Sets[0].weight).toBe(60);
+		});
+	});
+
+	// ── History queries ──
+
+	describe('getCompletedSessions', () => {
+		it('returns only completed sessions', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			// Create and complete a session
+			const s1 = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			await WorkoutRepository.addSet(s1.id, { exercise_id: EXERCISE_UUID_1, weight: 100, reps: 8 });
+			await WorkoutRepository.completeSession(s1.id, 3600);
+
+			// Create an in_progress session (should NOT appear)
+			await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+
+			const results = await WorkoutRepository.getCompletedSessions();
+			expect(results).toHaveLength(1);
+			expect(results[0].id).toBe(s1.id);
+		});
+
+		it('returns correct training_day_name', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			const s = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			await WorkoutRepository.completeSession(s.id, 1800);
+
+			const results = await WorkoutRepository.getCompletedSessions();
+			expect(results[0].training_day_name).toBe('Push Day');
+		});
+
+		it('returns correct exercise_count and total_sets', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			const s = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			// 2 exercises, 3 total sets
+			await WorkoutRepository.addSet(s.id, { exercise_id: EXERCISE_UUID_1, weight: 100, reps: 8 });
+			await WorkoutRepository.addSet(s.id, { exercise_id: EXERCISE_UUID_1, weight: 100, reps: 6 });
+			await WorkoutRepository.addSet(s.id, { exercise_id: EXERCISE_UUID_2, weight: 60, reps: 12 });
+			await WorkoutRepository.completeSession(s.id, 2400);
+
+			const results = await WorkoutRepository.getCompletedSessions();
+			expect(results[0].exercise_count).toBe(2);
+			expect(results[0].total_sets).toBe(3);
+		});
+
+		it('respects pagination (limit/offset)', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			// Create 3 completed sessions
+			for (let i = 0; i < 3; i++) {
+				const s = await WorkoutRepository.createSession({
+					program_id: program.id,
+					training_day_id: trainingDay.id
+				});
+				await WorkoutRepository.completeSession(s.id, 1000 + i);
+			}
+
+			const page1 = await WorkoutRepository.getCompletedSessions(2, 0);
+			expect(page1).toHaveLength(2);
+
+			const page2 = await WorkoutRepository.getCompletedSessions(2, 2);
+			expect(page2).toHaveLength(1);
+
+			// IDs should not overlap
+			const allIds = [...page1, ...page2].map((s) => s.id);
+			expect(new Set(allIds).size).toBe(3);
+		});
+
+		it('returns empty array when no completed sessions', async () => {
+			const results = await WorkoutRepository.getCompletedSessions();
+			expect(results).toEqual([]);
+		});
+
+		it('orders by completed_at DESC', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			const s1 = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			await WorkoutRepository.completeSession(s1.id, 1800);
+
+			const s2 = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			await WorkoutRepository.completeSession(s2.id, 2400);
+
+			const results = await WorkoutRepository.getCompletedSessions();
+			// Most recent first
+			expect(results[0].id).toBe(s2.id);
+			expect(results[1].id).toBe(s1.id);
+		});
+	});
+
+	describe('getSessionDetail', () => {
+		it('returns session with exercise names resolved', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			// Create real exercises so names can be resolved
+			const ex1 = await ExerciseRepository.create({
+				name: 'Bench Press',
+				muscle_group: 'chest',
+				equipment: 'barbell'
+			});
+			const ex2 = await ExerciseRepository.create({
+				name: 'Incline DB Press',
+				muscle_group: 'chest',
+				equipment: 'dumbbell'
+			});
+
+			const s = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			await WorkoutRepository.addSet(s.id, { exercise_id: ex1.id, weight: 100, reps: 8 });
+			await WorkoutRepository.addSet(s.id, { exercise_id: ex2.id, weight: 30, reps: 12 });
+			await WorkoutRepository.completeSession(s.id, 2000);
+
+			const detail = await WorkoutRepository.getSessionDetail(s.id);
+			expect(detail).not.toBeNull();
+			expect(detail!.id).toBe(s.id);
+			expect(detail!.sets).toHaveLength(2);
+			expect(detail!.exerciseNames[ex1.id]).toBe('Bench Press');
+			expect(detail!.exerciseNames[ex2.id]).toBe('Incline DB Press');
+		});
+
+		it('returns null for non-existent session', async () => {
+			const result = await WorkoutRepository.getSessionDetail('non-existent');
+			expect(result).toBeNull();
+		});
+
+		it('handles sets with unknown exercise_id gracefully', async () => {
+			const { program, trainingDay } = await seedProgramAndDay();
+
+			const s = await WorkoutRepository.createSession({
+				program_id: program.id,
+				training_day_id: trainingDay.id
+			});
+			// Use a UUID that doesn't correspond to any exercise
+			await WorkoutRepository.addSet(s.id, { exercise_id: EXERCISE_UUID_1, weight: 100, reps: 8 });
+			await WorkoutRepository.completeSession(s.id, 1000);
+
+			const detail = await WorkoutRepository.getSessionDetail(s.id);
+			expect(detail).not.toBeNull();
+			expect(detail!.exerciseNames[EXERCISE_UUID_1]).toBe('Unknown Exercise');
 		});
 	});
 

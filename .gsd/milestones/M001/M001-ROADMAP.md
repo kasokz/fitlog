@@ -64,7 +64,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Workout Logging** `risk:high` `depends:[S01,S02]`
   > After this: User can start a workout from a program day, log sets with weight/reps/RIR using tap-tap-done UX (pre-filled from last session), mark set types, use an optional rest timer, and see workout duration — all persisted to SQLite.
 
-- [ ] **S04: Workout History & Body Weight** `risk:low` `depends:[S01,S03]`
+- [x] **S04: Workout History & Body Weight** `risk:low` `depends:[S01,S03]`
   > After this: User can browse past workout sessions with full detail (exercises, sets, weights, reps, RIR), and log/view body weight entries over time.
 
 - [ ] **S05: Onboarding & Program Templates** `risk:medium` `depends:[S02]`
