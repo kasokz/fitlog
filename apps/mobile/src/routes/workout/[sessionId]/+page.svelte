@@ -11,6 +11,8 @@
 
 	import { notifySuccess, impactHeavy } from '$lib/services/haptics.js';
 	import { detectSessionPRs, type ExerciseGroup as PRExerciseGroup } from '$lib/services/analytics/sessionPRDetector.js';
+	import { loadProgressionSuggestions } from '$lib/services/analytics/progressionSuggestionLoader.js';
+	import type { ProgressionSuggestion } from '$lib/types/analytics.js';
 	import PRCelebrationToast from '$lib/components/workout/PRCelebrationToast.svelte';
 	import { getDb } from '$lib/db/database.js';
 	import { WorkoutRepository } from '$lib/db/repositories/workout.js';
@@ -19,7 +21,7 @@
 	import type { WorkoutSessionWithSets } from '$lib/types/workout.js';
 	import type { SetType } from '$lib/types/workout.js';
 	import type { ProgramWithDays, ExerciseAssignment } from '$lib/types/program.js';
-	import type { Exercise } from '$lib/types/exercise.js';
+	import type { Exercise, Equipment } from '$lib/types/exercise.js';
 
 	import ExerciseCard from '$lib/components/workout/ExerciseCard.svelte';
 	import DurationTimer from '$lib/components/workout/DurationTimer.svelte';
@@ -42,10 +44,16 @@
 	let finishDialogOpen = $state(false);
 	let finishing = $state(false);
 
+	/** Progression suggestions keyed by exerciseId — populated async after session load */
+	let progressionSuggestions = $state<Map<string, ProgressionSuggestion>>(new Map());
+	/** In-memory set of exerciseIds whose suggestion banners have been dismissed this session */
+	let dismissedSuggestions = $state(new Set<string>());
+
 	interface ExerciseGroup {
 		exerciseId: string;
 		exerciseName: string;
 		muscleGroup: Exercise['muscle_group'];
+		equipment: Equipment;
 		assignmentId: string | null;
 		sets: WorkingSet[];
 	}
@@ -130,6 +138,7 @@
 						exerciseId: assignment.exercise_id,
 						exerciseName: exercise?.name ?? m.workout_deleted_exercise(),
 						muscleGroup: exercise?.muscle_group ?? 'full_body',
+						equipment: exercise?.equipment ?? 'other',
 						assignmentId: assignment.id,
 						sets: setsForExercise
 					});
@@ -153,12 +162,19 @@
 					exerciseId: eid,
 					exerciseName: exercise?.name ?? m.workout_deleted_exercise(),
 					muscleGroup: exercise?.muscle_group ?? 'full_body',
+					equipment: exercise?.equipment ?? 'other',
 					assignmentId: null,
 					sets: setsForExercise
 				});
 			}
 
 			exerciseGroups = groups;
+
+			// Fire-and-forget: load progression suggestions after UI renders
+			const groupExerciseIds = groups.map((g) => g.exerciseId);
+			loadProgressionSuggestions(groupExerciseIds).then((suggestions) => {
+				progressionSuggestions = suggestions;
+			});
 		} catch (err) {
 			console.error('[Workout] Session load failed:', err);
 			error = err instanceof Error ? err.message : String(err);
@@ -186,6 +202,10 @@
 	$effect(() => {
 		loadSession();
 	});
+
+	function dismissSuggestion(exerciseId: string) {
+		dismissedSuggestions = new Set([...dismissedSuggestions, exerciseId]);
+	}
 
 	// ── Event handlers ──
 
@@ -405,6 +425,8 @@
 					onconfirm={(setIndex) => handleConfirmSet(groupIndex, setIndex)}
 					onadd={() => handleAddSet(groupIndex)}
 					onremove={(setIndex) => handleRemoveSet(groupIndex, setIndex)}
+					suggestion={dismissedSuggestions.has(group.exerciseId) ? null : (progressionSuggestions.get(group.exerciseId) ?? null)}
+					ondismiss={() => dismissSuggestion(group.exerciseId)}
 				/>
 			{/each}
 		</div>

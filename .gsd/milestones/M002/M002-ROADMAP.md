@@ -64,7 +64,7 @@ This milestone is complete only when all are true:
 - [x] **S03: PR Detection, Celebration & History** `risk:medium` `depends:[S01]`
   > After this: When a user completes a workout session, PRs are automatically detected and a celebration toast with haptic feedback shows the achievement. A dedicated PR history view shows all personal records per exercise with dates and values. PRs are visible from the exercise detail screen.
 
-- [ ] **S04: RIR Progression Suggestions in Workout** `risk:medium` `depends:[S01]`
+- [x] **S04: RIR Progression Suggestions in Workout** `risk:medium` `depends:[S01]`
   > After this: During an active workout, if the analytics engine determines a progression suggestion exists for an exercise (based on RIR trends from recent sessions), a non-intrusive banner appears on the exercise card suggesting a specific weight increase (rounded to practical increments per equipment type).
 
 - [ ] **S05: Deload Auto-Adjustment** `risk:low` `depends:[S01]`

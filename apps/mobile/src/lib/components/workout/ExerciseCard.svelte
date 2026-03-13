@@ -6,10 +6,12 @@
 	import { m } from '$lib/paraglide/messages.js';
 
 	import type { MuscleGroup } from '$lib/types/exercise.js';
+	import type { ProgressionSuggestion } from '$lib/types/analytics.js';
 	import { getMuscleGroupLabel } from '$lib/components/exercises/i18n-maps.js';
 
 	import SetRow from './SetRow.svelte';
 	import type { WorkingSet } from './SetRow.svelte';
+	import ProgressionBanner from './ProgressionBanner.svelte';
 
 	interface Props {
 		exerciseName: string;
@@ -18,9 +20,11 @@
 		onconfirm: (setIndex: number) => void;
 		onadd: () => void;
 		onremove: (setIndex: number) => void;
+		suggestion?: ProgressionSuggestion | null;
+		ondismiss?: () => void;
 	}
 
-	let { exerciseName, muscleGroup, sets = $bindable(), onconfirm, onadd, onremove }: Props = $props();
+	let { exerciseName, muscleGroup, sets = $bindable(), onconfirm, onadd, onremove, suggestion = null, ondismiss }: Props = $props();
 </script>
 
 <Card class="border-2 border-border shadow-md">
@@ -33,6 +37,10 @@
 		</div>
 	</CardHeader>
 	<CardContent class="space-y-2">
+		{#if suggestion}
+			<ProgressionBanner {suggestion} ondismiss={() => ondismiss?.()} />
+		{/if}
+
 		{#each sets as set, index (set.id)}
 			<SetRow
 				bind:set={sets[index]}

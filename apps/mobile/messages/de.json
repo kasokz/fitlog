@@ -300,5 +300,10 @@
 	"pr_detail_reps_value": "{value} Wdh.",
 	"pr_detail_e1rm_value": "~{value} kg",
 	"pr_detail_at_weight": "bei {weight} kg",
-	"pr_detail_loading": "Rekorde laden..."
+	"pr_detail_loading": "Rekorde laden...",
+	"progression_banner_title": "Progression vorgeschlagen",
+	"progression_banner_message": "Erhöhe auf {suggestedWeight} kg (+{increment} kg)",
+	"progression_banner_reason": "Durchschnittliches RIR von {avgRir} über {sessions} Einheiten",
+	"progression_banner_dismiss": "Ausblenden",
+	"progression_banner_sessions_analyzed": "{sessions} Einheiten analysiert"
 }
