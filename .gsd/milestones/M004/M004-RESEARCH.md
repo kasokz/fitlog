@@ -185,3 +185,74 @@ These emerged from research and should be discussed before being added to REQUIR
 - Better Auth SvelteKit integration (source: [Better Auth Docs — SvelteKit](https://www.better-auth.com/docs/integrations/svelte-kit))
 - PowerSync custom backend connector pattern (source: [PowerSync Docs — Capacitor Reference](https://docs.powersync.com/client-sdks/reference/capacitor))
 - Production reference app: Better Auth + Drizzle + SvelteKit + adapter-node (source: `references/capacitor-live-updates/`)
+
+---
+
+## Addendum: Revised Direction (2026-03-13)
+
+**PowerSync rejected.** PowerSync replaces the entire SQLite driver with its own managed DB layer (`ps_data__*` tables, internal views, `ps_crud` queue). The user requires keeping `@capgo/capacitor-fast-sql` and raw SQLite control. Decision recorded as D098 (supersedes D086) and D099 (supersedes D090).
+
+**Revised approach: Custom REST sync protocol** on top of the existing unchanged SQLite layer. The data model already has everything needed: UUID PKs, `updated_at` timestamps, and `deleted_at` for soft delete.
+
+### Revised Architecture
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Mobile App      │────▶│  SvelteKit API   │────▶│  PostgreSQL     │
+│  (Capacitor)     │     │  (apps/web)      │     │  (source DB)    │
+│                  │     │  - Better Auth   │     │                 │
+│  @capgo/         │     │  - Drizzle ORM   │     │  user_id on     │
+│  capacitor-      │     │  - Sync API      │     │  all tables     │
+│  fast-sql        │     │  - JWT/Bearer    │     │                 │
+│  (UNCHANGED)     │     └──────────────────┘     └─────────────────┘
+│                  │
+│  Local SQLite    │
+│  (same as today) │
+└─────────────────┘
+```
+
+**Data flow:**
+1. Client writes to local SQLite via existing `dbExecute`/`dbQuery` — unchanged
+2. Sync service reads rows with `updated_at > last_push_at`, pushes to API
+3. API validates auth (Bearer token), applies LWW per row, writes to Postgres via Drizzle
+4. Client pulls: requests rows where server `updated_at > last_pull_at`
+5. Client applies pulled changes to local SQLite via existing `dbExecute`
+
+**What stays the same:**
+- `@capgo/capacitor-fast-sql` — untouched
+- `database.ts` (dbExecute, dbQuery, getDb) — untouched
+- All 5 repositories — untouched
+- All 428 tests — untouched
+- Test helper mocking capgo — untouched
+
+**What's new:**
+- Sync service (`sync.ts`) — new module calling existing DB functions
+- Auth client (`auth-client.ts`) — sign-up/in/out, token storage
+- Server-side: Better Auth + Drizzle + Postgres + sync API routes
+- Schema v6: deterministic seed exercise UUIDs (D102)
+- Docker Compose for Postgres
+
+**What's eliminated vs. original plan:**
+- No PowerSync Service (Docker container)
+- No PowerSync client SDK
+- No SQLite plugin swap
+- No test infrastructure rewrite
+- No `ps_data__*` internal tables
+- No sync rules YAML
+- No JWKS endpoint (Better Auth Bearer plugin is sufficient for API auth)
+
+### Revised Risk Profile
+
+The highest-risk item from the original plan (SQLite layer swap, 428 test rewrite) is completely eliminated. The new highest risks are:
+
+1. **Sync protocol correctness** — LWW with `updated_at` requires reasonable clock sync across devices. Mitigated by server-timestamping on push (server records its own `updated_at` rather than trusting client timestamps blindly).
+2. **Initial full sync performance** — Pulling all user data on new device sign-in. Mitigated by pagination and table-level batching.
+3. **Better Auth JWT/Bearer for mobile** — Unproven in this specific stack for mobile clients. Same risk as before, but the only integration risk now (vs. multiple integration risks with PowerSync).
+
+### Backend Stack (unchanged)
+
+- **Better Auth** — still the right choice for auth (D087). JWT plugin still useful for stateless Bearer tokens. JWKS endpoint no longer needed (was for PowerSync Service).
+- **Drizzle ORM** — still the right choice (D088).
+- **SvelteKit `apps/web`** — still the right choice (D089).
+- **PostgreSQL** — still the right choice.
+- **Reference app patterns** — still applicable for auth setup, DB setup, hooks, error handling.
