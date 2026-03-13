@@ -1,0 +1,2309 @@
+# Fastfile - Deployment automation for iOS and Android
+#
+# This configuration file defines deployment lanes for iOS and Android platforms.
+# Each lane is a series of automated steps (actions) that accomplish a deployment task.
+#
+# Table of Contents:
+#   - before_all: Common setup for all lanes
+#   - iOS platform lanes (dev, deploy_internal, promote_to_production)
+#   - Android platform lanes (dev, deploy_internal, promote_to_closed_testing, promote_to_production)
+#   - Helper lanes (verify_setup, sync_capacitor)
+#   - after_all: Success handler
+#   - error: Error handler with troubleshooting hints
+#
+# Learn more about lanes: https://docs.fastlane.tools/advanced/lanes/
+# Learn more about actions: https://docs.fastlane.tools/actions/
+
+# =============================================================================
+# Configuration
+# =============================================================================
+
+# Optional: Disable anonymous usage statistics
+# More info: https://docs.fastlane.tools/advanced/other/#metrics
+opt_out_usage
+
+# =============================================================================
+# Hooks
+# =============================================================================
+
+# before_all runs before any lane execution
+# Use for common setup steps like environment validation
+before_all do |lane, options|
+  puts "🚀 Starting lane: #{lane}"
+  puts "   Platform: #{lane_context[:PLATFORM_NAME]}"
+
+  # Set project root for Capacitor commands
+  # Fastlane runs from fastlane/ subdirectory by default
+  # We need to run Capacitor commands from the project root (apps/mobile/)
+  ENV["PROJECT_ROOT"] = File.expand_path("..", Dir.pwd)
+  ENV["APP_ID"] = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+  puts "   Project root: #{ENV['PROJECT_ROOT']}"
+end
+
+# =============================================================================
+# Shared Lanes (Used across platforms)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# SETUP API KEY (App Store Connect Authentication)
+# -----------------------------------------------------------------------------
+# This lane configures API key authentication for App Store Connect
+#
+# PURPOSE:
+#   Configures API key authentication to eliminate 2FA prompts during
+#   certificate and profile operations. Required for CI/CD automation.
+#
+# REQUIREMENTS:
+#   - FASTLANE_KEY_ID: API Key ID from App Store Connect
+#   - FASTLANE_ISSUER_ID: Issuer ID from App Store Connect
+#   - FASTLANE_KEY_FILEPATH: Path to downloaded .p8 key file
+#
+# WHERE TO FIND:
+#   1. Log into https://appstoreconnect.apple.com
+#   2. Go to Users and Access > Keys
+#   3. Click '+' to generate new API key
+#   4. Select 'Admin' or 'App Manager' role
+#   5. Download .p8 file (can only download ONCE!)
+#   6. Note the Key ID and Issuer ID displayed on page
+#
+# DOCUMENTATION:
+#   - API Key Setup: https://docs.fastlane.tools/app-store-connect-api/
+#   - Action Reference: https://docs.fastlane.tools/actions/app_store_connect_api_key/
+#
+# USAGE:
+#   Called automatically by certificate lanes
+#   Can also run standalone: bundle exec fastlane setup_api_key
+desc "Set up App Store Connect API authentication"
+lane :setup_api_key do
+  # Why: Eliminates 2FA prompts, enables CI/CD automation
+  # Parameters:
+  #   - key_id: API Key ID from App Store Connect
+  #   - issuer_id: Issuer ID from App Store Connect (identifies your team)
+  #   - key_filepath: Path to .p8 file downloaded from App Store Connect
+  #   - duration: Token validity (1200 seconds = 20 minutes, maximum allowed)
+  #   - in_house: false for standard Apple Developer, true for Enterprise
+  app_store_connect_api_key(
+    key_id: ENV["FASTLANE_KEY_ID"],
+    issuer_id: ENV["FASTLANE_ISSUER_ID"],
+    key_filepath: ENV["FASTLANE_KEY_FILEPATH"],
+    duration: 1200,
+    in_house: false
+  )
+end
+
+# ---------------------------------------------------------------------------
+# FRAME SCREENSHOTS - Add device frames to screenshots
+# ---------------------------------------------------------------------------
+# Adds device mockups and marketing text to raw screenshots.
+# Run this after capturing screenshots with the screenshots lane.
+# Automatically cleans up non-framed Android screenshots since Play Store
+# only allows 6 screenshots per locale.
+#
+# USAGE:
+#   bundle exec fastlane custom_frame_screenshots
+#   bundle exec fastlane custom_frame_screenshots skip_frameit:true  # Skip framing, cleanup only
+#
+# PARAMETERS:
+#   skip_frameit: Set to true to skip frameit and only run cleanup (default: false)
+#
+# REQUIREMENTS:
+#   - Screenshots captured in metadata/ios/{locale}/screenshots/
+#   - Screenshots captured in metadata/android/{locale}/images/phoneScreenshots/
+#   - Framefile.json configuration in fastlane/
+#   - imagemagick installed (brew install imagemagick)
+#
+# DOCUMENTATION:
+#   https://docs.fastlane.tools/actions/frameit/
+desc "Add device frames to screenshots"
+lane :custom_frame_screenshots do |options|
+  # Step 1: Run frameit to add device frames (unless skipped)
+  skip_frameit = options[:skip_frameit] || false
+
+  if skip_frameit
+    puts "⏭️  Skipping frameit (skip_frameit=true)"
+  else
+    puts "📱 Adding device frames to screenshots..."
+    frameit
+  end
+
+  # Step 2: Clean up non-framed Android screenshots
+  # Why: Play Store only allows 6 screenshots per locale
+  # Frameit creates new _framed.png files but keeps originals
+  # We need to delete originals to avoid exceeding the 6 screenshot limit
+  puts "🧹 Cleaning up non-framed Android screenshots..."
+
+  android_metadata_path = "./metadata/android"
+
+  # Find all phoneScreenshots directories across all locales
+  screenshot_dirs = Dir.glob("#{android_metadata_path}/*/images/phoneScreenshots")
+  puts "   Found #{screenshot_dirs.count} screenshot directories"
+
+  screenshot_dirs.each do |screenshot_dir|
+    locale = screenshot_dir.match(%r{metadata/android/([^/]+)/})[1]
+    puts "   Processing locale: #{locale}"
+
+    # Find all non-framed screenshots (files without _framed in name)
+    non_framed_screenshots = Dir.glob("#{screenshot_dir}/*.png").select do |file|
+      !File.basename(file).include?("_framed") && File.basename(file) != ".gitkeep"
+    end
+
+    # Delete non-framed screenshots
+    non_framed_screenshots.each do |file|
+      File.delete(file)
+      puts "      Deleted: #{File.basename(file)}"
+    end
+
+    # Report results
+    framed_count = Dir.glob("#{screenshot_dir}/*_framed.png").count
+    puts "      ✅ #{non_framed_screenshots.count} non-framed screenshots deleted"
+    puts "      ✅ #{framed_count} framed screenshots remaining"
+
+    if framed_count > 6
+      puts "      ⚠️  WARNING: #{framed_count} screenshots found (max 6 allowed)"
+    end
+  end
+
+  puts "✅ Screenshot #{skip_frameit ? 'cleanup' : 'framing and cleanup'} complete!"
+end
+
+# =============================================================================
+# iOS Platform
+# =============================================================================
+
+platform :ios do
+  # Setup CI environment if running on CI system
+  before_all do
+    setup_ci if ENV["GITLAB_CI"]
+  end
+
+  # ---------------------------------------------------------------------------
+  # DEV LANE
+  # ---------------------------------------------------------------------------
+  # This lane builds iOS app for development testing
+  # It configures development signing, syncs web assets, builds the iOS archive,
+  # and exports a development-signed .ipa
+  #
+  # PURPOSE:
+  #   Builds a development-signed iOS .ipa file for local testing on devices.
+  #   This lane is used during development to test on physical devices without
+  #   uploading to TestFlight. Automatically configures development signing.
+  #
+  # REQUIREMENTS:
+  #   - Xcode command line tools installed
+  #   - Development certificates in match repository (run certificates_development first)
+  #   - Development provisioning profile with device UDIDs
+  #   - FASTLANE_TEAM_ID environment variable set
+  #   - MATCH_PASSWORD environment variable set
+  #
+  # STEPS:
+  #   1. Fetches development certificates from match
+  #   2. Configures Xcode project with development signing
+  #   3. Syncs web assets to native iOS project (npx cap sync ios)
+  #   4. Builds iOS archive using xcodebuild
+  #   5. Exports .ipa with development provisioning
+  #
+  # OUTPUT:
+  #   - .ipa file in ./fastlane/builds/ directory
+  #   - Build log in ~/Library/Logs/gym/
+  #
+  # TROUBLESHOOTING:
+  #   - 'Certificates not found': Run 'bundle exec fastlane ios certificates_development' first
+  #   - 'Device not in profile': Add UDID to provisioning profile in Apple Developer Portal
+  #   - 'Scheme not found': Verify ios/App/App.xcodeproj exists
+  #
+  # DOCUMENTATION:
+  #   - Fastlane gym: https://docs.fastlane.tools/actions/gym/
+  #   - Capacitor sync: https://capacitorjs.com/docs/cli/commands/sync
+  #   - Code signing: https://docs.fastlane.tools/codesigning/getting-started/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios dev
+  desc "Build iOS development app"
+  lane :dev do
+    puts "📱 Building iOS development app..."
+
+    # Step 1: Set up API authentication
+    # Why: Required for match to fetch development certificates
+    setup_api_key
+
+    # Step 2: Install development certificates and configure Xcode project
+    # Why: dev builds require development provisioning profile, not app store
+    puts "   Step 1/4: Installing development certificates..."
+    match(
+      type: "development",
+      readonly: false, # Allow updating profile to include local certificates
+      force_for_new_devices: true # Regenerate profile if devices or certs changed
+    )
+
+    # Update Xcode project with development signing
+    # Why: Ensures build uses development profile, not app store profile
+    # Use the exact certificate name from match to avoid Xcode picking wrong cert
+    cert_name = ENV["sigh_#{ENV["APP_ID"]}_development_certificate-name"] || "Apple Development"
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_development_profile-name"],
+      code_sign_identity: cert_name
+    )
+
+    # Step 3: Sync Capacitor assets
+    puts "   Step 2/4: Syncing Capacitor web assets..."
+    sync_capacitor(platform: "ios")
+
+    # Step 4: Build iOS archive and export .ipa
+    # Why: Creates installable iOS app file signed with development certificate
+    # Parameters:
+    #   - scheme: Xcode scheme to build (usually "App" for Capacitor projects)
+    #   - project: Path to .xcodeproj file (SPM projects use xcodeproj, not xcworkspace)
+    #   - export_method: "development" for local testing, "app-store" for distribution
+    #   - output_directory: Where to save the .ipa file
+    #   - output_name: Name of the .ipa file
+    #   - codesigning_identity: Use exact certificate from match (prevents wrong cert selection)
+    #   - export_options: Explicitly specify signing certificate and profile for export
+    puts "   Step 3/4: Building iOS archive..."
+
+    # Get the certificate identity from match
+    cert_identity = ENV["sigh_#{ENV["APP_ID"]}_development_certificate-name"] || "Apple Development"
+
+    gym(
+      scheme: "App",
+      project: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      export_method: "development",
+      output_directory: "./builds",
+      output_name: "App-dev.ipa",
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['FASTLANE_TEAM_ID']}",
+      export_options: {
+        signingCertificate: cert_identity,
+        provisioningProfiles: {
+          ENV["APP_ID"] => ENV["sigh_#{ENV["APP_ID"]}_development_profile-name"]
+        }
+      }
+    )
+
+    puts "✅ iOS development build complete!"
+    puts "   Location: ./fastlane/builds/App-dev.ipa"
+  end
+
+  # ---------------------------------------------------------------------------
+  # CERTIFICATES APPSTORE LANE
+  # ---------------------------------------------------------------------------
+  # This lane generates or retrieves iOS Distribution certificate and App Store
+  # provisioning profile using fastlane match
+  #
+  # PURPOSE:
+  #   Generates or retrieves iOS Distribution certificate and App Store
+  #   provisioning profile using fastlane match. Certificates are shared
+  #   across the team via encrypted git storage.
+  #
+  # REQUIREMENTS:
+  #   - MATCH_GIT_URL: Private git repo URL for certificate storage
+  #   - MATCH_PASSWORD: Passphrase for encrypting/decrypting certificates
+  #   - FASTLANE_KEY_ID, FASTLANE_ISSUER_ID, FASTLANE_KEY_FILEPATH: API key auth
+  #   - Apple Developer Account with Admin/App Manager role
+  #
+  # WHAT HAPPENS:
+  #   1. Authenticates with App Store Connect via API key
+  #   2. Clones private git repo (MATCH_GIT_URL)
+  #   3. Checks if valid certificate/profile exists in repo
+  #   4. If exists: Decrypts and installs locally
+  #   5. If not: Creates new cert/profile, encrypts, commits to repo
+  #   6. Installs certificate to Keychain
+  #   7. Installs profile to Xcode provisioning profiles directory
+  #
+  # OUTPUTS:
+  #   - Certificate installed in macOS Keychain
+  #   - Provisioning profile installed for Xcode
+  #   - Environment variables set for gym to use correct profile
+  #
+  # FIRST TIME SETUP:
+  #   - Run 'bundle exec fastlane match init' first if Matchfile doesn't exist
+  #   - You will be prompted for MATCH_PASSWORD if not in .env
+  #   - Match may ask to revoke existing certificates (confirm if starting fresh)
+  #
+  # TROUBLESHOOTING:
+  #   - 'Could not decrypt': Wrong MATCH_PASSWORD, check .env file
+  #   - 'Git authentication failed': Check MATCH_GIT_URL and git access
+  #   - 'No API key': Ensure FASTLANE_KEY_* variables are set in .env
+  #   - 'Certificate already exists': Match will reuse existing cert from repo
+  #
+  # DOCUMENTATION:
+  #   - Match Guide: https://docs.fastlane.tools/actions/match/
+  #   - Code Signing Guide: https://codesigning.guide/
+  #   - Troubleshooting: https://docs.fastlane.tools/codesigning/troubleshooting/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios certificates_appstore
+  desc "Generate or retrieve iOS Distribution certificate and App Store provisioning profile"
+  lane :certificates_appstore do
+    puts "🔐 Setting up App Store certificates and profiles..."
+
+    # Step 1: Set up API authentication (avoids 2FA prompts)
+    # Why: Enables non-interactive certificate management
+    setup_api_key
+
+    # Step 2: Run match for App Store provisioning
+    # Why: Fetches or generates distribution certificate and app store profile
+    # Parameters:
+    #   - type: "appstore" = App Store Distribution profile (for production releases)
+    #   - app_identifier: Must match bundle ID in capacitor.config.ts
+    #   - readonly: false = Allow creating new certs if needed (use true on CI systems)
+    #   - verbose: true = Detailed output for troubleshooting
+    puts "   Running match for App Store profile..."
+    match(
+      type: "appstore",
+      readonly: false,
+      verbose: true
+    )
+
+    # Step 3: Update Xcode project with match results
+    # Why: Automatically configures code signing in Xcode project so you don't
+    #      need to manually select signing settings in Xcode
+    # What it does:
+    #   - Sets provisioning profile to the one match just installed
+    #   - Sets code signing identity to the certificate match installed
+    #   - Updates all targets and build configurations
+    # Benefits:
+    #   - Makes project shareable - no manual Xcode setup needed
+    #   - Prevents "Automatic signing" conflicts in team environments
+    #   - Ensures consistent signing across team and CI
+    puts "   Updating Xcode project code signing settings..."
+
+    # Use exact certificate name from match
+    cert_name = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"], # Set by match
+      code_sign_identity: cert_name
+    )
+
+    puts "✅ App Store certificates and profiles installed successfully!"
+    puts "   Certificate: Installed to macOS Keychain"
+    puts "   Profile: Installed to ~/Library/Developer/Xcode/UserData/Provisioning Profiles/"
+    puts "   Xcode Project: Updated with match signing settings"
+  end
+
+  # ---------------------------------------------------------------------------
+  # CERTIFICATES DEVELOPMENT LANE
+  # ---------------------------------------------------------------------------
+  # This lane generates or retrieves iOS Development certificate and Development
+  # provisioning profile for testing on physical devices
+  #
+  # PURPOSE:
+  #   Same as certificates_appstore but for development builds on physical devices.
+  #   Development profiles contain device UDIDs for authorized testing devices.
+  #
+  # REQUIREMENTS:
+  #   Same as certificates_appstore (MATCH_GIT_URL, MATCH_PASSWORD, API key vars)
+  #
+  # WHEN TO USE:
+  #   - When setting up a new development machine
+  #   - When adding new test devices to profile
+  #   - Before running 'bundle exec fastlane ios dev'
+  #
+  # ADDING NEW DEVICES:
+  #   1. Get device UDID from Xcode (Window > Devices and Simulators)
+  #   2. Add to Apple Developer Portal (Devices section)
+  #   3. Run this lane again to regenerate profile with new device
+  #
+  # DOCUMENTATION:
+  #   - Match Guide: https://docs.fastlane.tools/actions/match/
+  #   - Device Registration: https://docs.fastlane.tools/actions/register_devices/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios certificates_development
+  desc "Generate or retrieve iOS Development certificate and provisioning profile"
+  lane :certificates_development do
+    puts "🔐 Setting up Development certificates and profiles..."
+
+    # Step 1: Set up API authentication
+    setup_api_key
+
+    # Step 2: Run match for Development provisioning
+    # Why: Fetches or generates development certificate and profile with device UDIDs
+    # Parameters:
+    #   - type: "development" = Development profile (for testing on physical devices)
+    #   - app_identifier: Must match bundle ID in capacitor.config.ts
+    #   - readonly: false = Allow creating new certs and profiles if needed
+    puts "   Running match for Development profile..."
+    match(
+      type: "development",
+      readonly: false
+    )
+
+    # Step 3: Update Xcode project with match results
+    # Why: Automatically configures development signing in Xcode project
+    puts "   Updating Xcode project code signing settings..."
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_development_profile-name"], # Set by match
+      code_sign_identity: "Apple Development" # Development certificate
+    )
+
+    puts "✅ Development certificates and profiles installed successfully!"
+    puts "   Xcode Project: Updated with match signing settings"
+  end
+
+  # ---------------------------------------------------------------------------
+  # CERTIFICATES READONLY LANE (CI Usage)
+  # ---------------------------------------------------------------------------
+  # This lane fetches existing certificates without generating new ones
+  # ALWAYS use this lane on CI/CD systems to prevent accidental certificate creation
+  #
+  # PURPOSE:
+  #   Fetches existing certificates from match repository without generating new ones.
+  #   ALWAYS use this lane on CI/CD systems to prevent accidental certificate creation.
+  #
+  # WHY READONLY MATTERS:
+  #   - CI systems should never create new certificates (pollutes Developer Portal)
+  #   - readonly: true ensures match only installs existing certs from git repo
+  #   - If certificate doesn't exist, lane fails (intentionally) - run certificates_appstore locally first
+  #
+  # WHEN TO USE:
+  #   - In CI/CD pipelines before building app
+  #   - On new build machines that need to install existing certs
+  #   - When you want to verify certs exist without risk of creating new ones
+  #
+  # USAGE IN CI:
+  #   # In your CI pipeline
+  #   bundle exec fastlane ios certificates_readonly
+  #
+  # DOCUMENTATION:
+  #   - Match CI Best Practices: https://docs.fastlane.tools/actions/match/#ci-environment
+  #
+  # USAGE:
+  #   bundle exec fastlane ios certificates_readonly
+  desc "Fetch existing certificates (readonly mode for CI systems)"
+  lane :certificates_readonly do
+    puts "🔐 Fetching existing certificates (readonly mode)..."
+
+    # Step 1: Set up API authentication
+    setup_api_key
+
+    # Step 2: Run match in readonly mode
+    # Why: CI should NEVER create new certificates - only install existing ones
+    # Parameters:
+    #   - type: "appstore" = App Store Distribution profile
+    #   - app_identifier: Must match bundle ID in capacitor.config.ts
+    #   - readonly: true = CRITICAL for CI - prevents creating new certs
+    #   - verbose: false = Less noise in CI logs
+    puts "   Running match in readonly mode (no cert creation)..."
+    match(
+      type: "appstore",
+      readonly: true,
+      verbose: false
+    )
+
+    # Step 3: Update Xcode project with match results
+    # Why: Automatically configures code signing for CI builds
+    puts "   Updating Xcode project code signing settings..."
+
+    # Use exact certificate name from match
+    cert_name = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"], # Set by match
+      code_sign_identity: cert_name
+    )
+
+    puts "✅ Existing certificates installed successfully (readonly mode)!"
+    puts "   ⚠️  Note: This lane will fail if certificates don't exist in match repo"
+    puts "   → Run 'bundle exec fastlane ios certificates_appstore' locally first"
+    puts "   Xcode Project: Updated with match signing settings"
+  end
+
+  # ---------------------------------------------------------------------------
+  # DEPLOY INTERNAL LANE
+  # ---------------------------------------------------------------------------
+  # This lane deploys iOS builds to TestFlight for internal testing
+  #
+  # PURPOSE:
+  #   Builds and uploads iOS app to TestFlight for distribution to internal testers.
+  #   Automatically increments build number to prevent upload conflicts.
+  #   This is the ONLY lane that creates new builds - use promotion lanes to
+  #   move this build through external testing → production.
+  #
+  # REQUIREMENTS:
+  #   - Phase 46 certificate setup complete (match configured)
+  #   - MATCH_PASSWORD set in fastlane/.env
+  #   - App Store Connect API key configured
+  #   - Apple Generic Versioning enabled in Xcode:
+  #     1. Open ios/App/App.xcodeproj in Xcode
+  #     2. Select App target > Build Settings
+  #     3. Set 'Versioning System' to 'Apple Generic'
+  #     4. Set 'Current Project Version' to current build number
+  #
+  # STEPS:
+  #   1. Fetch latest TestFlight build number
+  #   2. Increment build number (latest + 1)
+  #   3. Build SvelteKit web app
+  #   4. Sync web assets to iOS native project
+  #   5. Install App Store certificates (readonly mode)
+  #   6. Build and sign IPA file
+  #   7. Upload to App Store Connect
+  #   8. Wait for processing (optional on CI)
+  #   9. Submit for internal testing (no external review)
+  #
+  # OUTPUTS:
+  #   - IPA file uploaded to TestFlight
+  #   - Build number auto-incremented in Xcode project
+  #   - Build appears in App Store Connect after 10-30 min processing
+  #
+  # PROMOTION WORKFLOW:
+  #   After internal testing passes:
+  #   1. bundle exec fastlane ios promote_to_external_testing
+  #   2. After external testing passes:
+  #   3. bundle exec fastlane ios promote_to_production
+  #
+  # COMMON ERRORS:
+  #   - 'Build number already exists': Latest TestFlight fetch failed, check API key
+  #   - 'Apple Generic Versioning not enabled': Enable in Xcode Build Settings
+  #   - 'No signing identity': Run 'fastlane ios certificates_appstore' first
+  #   - 'Missing Compliance': Add ITSAppUsesNonExemptEncryption to Info.plist (done in Task 1)
+  #
+  # DOCUMENTATION:
+  #   - Pilot guide: https://docs.fastlane.tools/actions/pilot/
+  #   - Build numbers: https://developer.apple.com/library/ios/qa/qa1827/
+  #   - Export compliance: https://developer.apple.com/documentation/security/complying_with_encryption_export_regulations
+  #
+  # USAGE:
+  #   bundle exec fastlane ios deploy_internal
+  desc "Deploy iOS app to TestFlight for internal testing"
+  lane :deploy_internal do
+    puts "🚀 Starting iOS deployment to TestFlight..."
+
+    # Step 1: Set up API authentication
+    # Why: Required for fetching build numbers and uploading to TestFlight
+    setup_api_key
+
+    # Step 2: Read version from latest git tag
+    # Why: Marketing version must match the active App Store Connect train
+    # Without this, the build uses the stale MARKETING_VERSION from the Xcode project,
+    # which may reference a closed train (e.g., "2.2" when current is "2.4")
+    # Same approach as Android deploy_internal lane
+    puts "   Step 1/8: Reading version from git tag..."
+    begin
+      version = sh("git describe --tags --abbrev=0", log: false).strip.delete_prefix('v')
+      puts "      Version: #{version}"
+    rescue => ex
+      puts "      ❌ No git tag found"
+      puts "         Create a tag first: git tag v2.4"
+      raise "Git tag required for iOS internal deployment"
+    end
+
+    # Step 3: Set marketing version in Xcode project
+    # Why: The IPA's CFBundleShortVersionString must match the target App Store Connect train
+    # Uses: agvtool to update MARKETING_VERSION in the .pbxproj
+    puts "   Step 2/8: Setting marketing version to #{version}..."
+    increment_version_number(
+      version_number: version,
+      xcodeproj: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj"
+    )
+    puts "      Marketing version set to: #{version}"
+
+    # Step 4: Fetch latest build number from TestFlight
+    # Why: Prevents duplicate build number upload failures
+    # Returns: Integer (e.g., 42), or initial_build_number if no builds exist
+    puts "   Step 3/8: Fetching latest TestFlight build number..."
+    latest_build = latest_testflight_build_number(
+      initial_build_number: 1, # First build if project is new
+      version: version # Fetch build number for the correct version train
+    )
+    puts "      Latest build number: #{latest_build}"
+
+    # Step 5: Increment build number
+    # Why: App Store Connect requires monotonically increasing build numbers
+    # Uses: Apple's agvtool to update Xcode project
+    # Requires: Apple Generic Versioning enabled in Xcode project settings
+    puts "   Step 4/8: Incrementing build number..."
+    new_build = increment_build_number(
+      build_number: latest_build + 1,
+      xcodeproj: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj"
+    )
+    puts "      New build number: #{new_build}"
+
+    # Step 6: Sync Capacitor web assets
+    # Why: Ensure native iOS app contains latest web build
+    # Output: Updated ios/App/App/public/ directory
+    puts "   Step 5/8: Syncing Capacitor web assets..."
+    sync_capacitor(platform: "ios")
+
+    # Step 7: Install App Store certificates
+    # Why: gym requires distribution certificate and provisioning profile
+    # Mode: readonly = never create new certificates (safe for CI)
+    puts "   Step 6/8: Installing App Store certificates..."
+    match(
+      type: "appstore",
+      readonly: true # CRITICAL: Prevents accidental cert creation
+    )
+
+    # Update Xcode project with match results
+    # Why: Ensures build uses correct signing settings from match
+    cert_name = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"],
+      code_sign_identity: cert_name
+    )
+
+    # Step 8: Build and sign IPA
+    # Why: Creates signed IPA file ready for TestFlight upload
+    # Output: ./fastlane/builds/App-<build_number>.ipa
+    puts "   Step 7/8: Building iOS archive..."
+
+    # Get the certificate identity from match
+    cert_identity = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+
+    gym(
+      scheme: "App",
+      project: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      export_method: "app-store", # App Store distribution signing
+      output_directory: "./builds",
+      output_name: "App-#{new_build}.ipa",
+      clean: true, # Clean before building (prevents stale build artifacts)
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['FASTLANE_TEAM_ID']}",
+      export_options: {
+        signingCertificate: cert_identity,
+        provisioningProfiles: {
+          ENV["APP_ID"] => ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"]
+        }
+      }
+    )
+
+     # Step 9: Upload to TestFlight
+     # Why: Makes build available to beta testers
+     # Wait behavior: Skips waiting on CI (saves build minutes), waits locally
+     puts "   Step 8/8: Uploading to TestFlight..."
+     upload_to_testflight(
+       # IPA path automatically detected from gym output (SharedValues::IPA_OUTPUT_PATH)
+       # No need to specify explicitly
+       # Skip waiting for build processing on CI to save build minutes
+       # Processing takes 10-30 minutes but happens on Apple's servers
+       # Build will be ready eventually, no need to keep CI job running
+       skip_waiting_for_build_processing: ENV["CI"] == "true",
+
+       # Changelog for testers ("What to Test" section in TestFlight)
+       # Visible to internal testers when they install the build
+       changelog: "Internal build #{new_build} - Please test latest features",
+
+       # Internal testing only by default (don't distribute to external testers)
+       # Why: External testing requires beta app review (adds 24-48 hour delay)
+       # Use promote_to_external_testing lane after internal testing passes
+       distribute_external: false,
+
+       # Don't automatically submit for beta app review
+       # External distribution handled by promotion lanes
+       submit_beta_review: false,
+
+       # Export compliance and advertising information
+       uses_non_exempt_encryption: false
+     )
+
+    # Report status
+    puts "   Build processing status..."
+    if ENV["CI"] == "true"
+      puts "      ⚠️  Build uploaded, exited without waiting (CI mode)"
+      puts "      Build will be ready in 10-30 minutes"
+      puts "      Monitor: https://appstoreconnect.apple.com"
+    else
+      puts "      ✅ Build processing complete"
+      puts "      Build is ready for testing"
+    end
+
+    puts "✅ iOS deployment to internal testing complete!"
+    puts ""
+    puts "   Version: #{version}"
+    puts "   Build: #{new_build}"
+    puts "   IPA: ./fastlane/builds/App-#{new_build}.ipa"
+    puts "   TestFlight: https://appstoreconnect.apple.com"
+    puts ""
+    puts "   Next steps:"
+    puts "   1. Wait for build processing (10-30 minutes)"
+    puts "   2. Test in internal TestFlight"
+    puts "   3. When ready: bundle exec fastlane ios promote_to_production"
+  end
+
+  # ---------------------------------------------------------------------------
+  # BETA DRYRUN LANE
+  # ---------------------------------------------------------------------------
+  # This lane tests the entire beta deployment infrastructure without distributing to testers
+  #
+  # PURPOSE:
+  #   Tests complete beta deployment workflow (build, sign, upload) WITHOUT submitting
+  #   the build for beta review. Build is uploaded to App Store Connect but NOT
+  #   distributed to any testers. Useful for validating deployment infrastructure
+  #   before real releases.
+  #
+  # WHEN TO USE:
+  #   - First-time beta setup: Verify entire deployment pipeline works
+  #   - After certificate changes: Confirm signing works end-to-end
+  #   - Practice deployments: Test process without affecting testers
+  #   - CI/CD testing: Validate automation without submitting builds
+  #
+  # DIFFERENCE FROM BETA LANE:
+  #   - skip_submission: true = Upload ONLY, no beta review submission
+  #   - skip_waiting_for_build_processing: true = Exit immediately after upload
+  #   - Build appears in App Store Connect but is NOT submitted for review
+  #   - Testers will NOT be notified or able to install this build
+  #
+  # REQUIREMENTS:
+  #   - Phase 46 certificate setup complete (match configured)
+  #   - MATCH_PASSWORD set in fastlane/.env
+  #   - App Store Connect API key configured
+  #   - Apple Generic Versioning enabled in Xcode project
+  #
+  # OUTPUTS:
+  #   - IPA uploaded to App Store Connect
+  #   - Build appears in TestFlight tab but NOT submitted
+  #   - Build number auto-incremented in Xcode project
+  #   - Confirms entire deployment infrastructure works
+  #
+  # TROUBLESHOOTING:
+  #   - Same errors as beta lane (signing, build number, etc.)
+  #   - See beta lane documentation for common issues
+  #   - If upload succeeds, your infrastructure is ready for real beta deployments
+  #
+  # DOCUMENTATION:
+  #   - Pilot skip_submission: https://docs.fastlane.tools/actions/pilot/#skip_submission
+  #   - TestFlight builds: https://developer.apple.com/testflight/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios beta_dryrun
+  desc "Test iOS beta deployment without distribution (dry-run)"
+  lane :beta_dryrun do
+    puts "🧪 Testing iOS beta deployment (dry-run mode)..."
+    puts "   NOTE: Build will upload but NOT be submitted for beta review"
+
+    # Step 1: Set up API authentication (required for TestFlight operations)
+    setup_api_key
+
+    # Step 2: Read version from latest git tag
+    # Why: Marketing version must match the active App Store Connect train
+    puts "   Step 1/8: Reading version from git tag..."
+    begin
+      version = sh("git describe --tags --abbrev=0", log: false).strip.delete_prefix('v')
+      puts "      Version: #{version}"
+    rescue => ex
+      puts "      ❌ No git tag found"
+      puts "         Create a tag first: git tag v2.4"
+      raise "Git tag required for iOS beta dryrun"
+    end
+
+    # Step 3: Set marketing version in Xcode project
+    # Why: The IPA's CFBundleShortVersionString must match the target App Store Connect train
+    puts "   Step 2/8: Setting marketing version to #{version}..."
+    increment_version_number(
+      version_number: version,
+      xcodeproj: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj"
+    )
+    puts "      Marketing version set to: #{version}"
+
+    # Step 4: Fetch latest build number from TestFlight
+    # Why: Prevents "duplicate build number" upload failures
+    puts "   Step 3/8: Fetching latest TestFlight build number..."
+    latest_build = latest_testflight_build_number(
+      initial_build_number: 1,
+      version: version # Fetch build number for the correct version train
+    )
+    puts "      Latest build: #{latest_build}"
+
+    # Step 5: Increment build number
+    # Why: App Store Connect requires unique build number per upload
+    puts "   Step 4/8: Incrementing build number..."
+    new_build = increment_build_number(
+      build_number: latest_build + 1,
+      xcodeproj: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj"
+    )
+    puts "      New build: #{new_build}"
+
+    # Step 6: Sync Capacitor assets
+    # Why: Ensure native app contains latest web build
+    puts "   Step 5/8: Syncing Capacitor web assets..."
+    sync_capacitor(platform: "ios")
+
+    # Step 7: Install certificates in readonly mode
+    # Why: CI should never create new certificates
+    puts "   Step 6/8: Installing App Store certificates..."
+    match(
+      type: "appstore",
+      readonly: true # CRITICAL: Never create certs on automated builds
+    )
+
+    # Update Xcode project with match results
+    # Why: Ensures build uses correct signing settings from match
+    cert_name = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      team_id: ENV["FASTLANE_TEAM_ID"],
+      bundle_identifier: ENV["APP_ID"],
+      profile_name: ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"],
+      code_sign_identity: cert_name
+    )
+
+    # Step 8: Build and export IPA
+    # Why: Creates signed IPA ready for TestFlight upload
+    puts "   Step 7/8: Building iOS archive..."
+
+    # Get the certificate identity from match
+    cert_identity = ENV["sigh_#{ENV["APP_ID"]}_appstore_certificate-name"] || "Apple Distribution"
+    gym(
+      scheme: "App",
+      project: "#{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj",
+      export_method: "app-store",
+      output_directory: "./builds",
+      output_name: "App-#{new_build}.ipa",
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['FASTLANE_TEAM_ID']}",
+      export_options: {
+        signingCertificate: cert_identity,
+        provisioningProfiles: {
+          ENV["APP_ID"] => ENV["sigh_#{ENV["APP_ID"]}_appstore_profile-name"]
+        }
+      }
+    )
+
+    # Step 9: Upload to TestFlight in dry-run mode
+    # Why: Tests upload infrastructure without submitting to testers
+    puts "   Step 8/8: Uploading to TestFlight (dry-run mode)..."
+    upload_to_testflight(
+      # DRY-RUN: Upload only, no beta review submission
+      # Build will appear in TestFlight but won't be distributed
+      skip_submission: true,
+
+      # Exit immediately after upload (don't wait for processing)
+      # Why: Dry-run just tests infrastructure, no need to wait
+      skip_waiting_for_build_processing: true
+    )
+
+    puts "   Upload complete (dry-run mode)"
+    puts "      ⚠️  Exited without waiting for build processing"
+    puts "      Build will appear in TestFlight in 10-30 minutes"
+
+    puts "✅ Dry-run complete! Build uploaded but NOT submitted."
+    puts ""
+    puts "   Build number: #{new_build}"
+    puts "   IPA: ./fastlane/builds/App-#{new_build}.ipa"
+    puts "   Verify: https://appstoreconnect.apple.com"
+    puts ""
+    puts "   What happened:"
+    puts "   ✓ Build number incremented"
+    puts "   ✓ IPA built and signed"
+    puts "   ✓ Upload to TestFlight successful"
+    puts "   ✗ Build NOT submitted for beta review (dry-run)"
+    puts ""
+    puts "   Next steps:"
+    puts "   - Check App Store Connect > TestFlight > Builds"
+    puts "   - Build will show 'Missing Compliance' or 'Ready to Submit'"
+    puts "   - This confirms your deployment infrastructure works"
+    puts "   - Ready to run: bundle exec fastlane ios deploy_internal (full deployment)"
+  end
+
+  # ---------------------------------------------------------------------------
+  # PROMOTE TO PRODUCTION LANE
+  # ---------------------------------------------------------------------------
+  # This lane submits the app to App Store for production release
+  #
+  # PURPOSE:
+  #   Creates a new App Store version and submits it for App Store review.
+  #   Automatically uses the latest TestFlight build number for the production release.
+  #   Includes all metadata, screenshots, and release information.
+  #
+  # REQUIREMENTS:
+  #   - TestFlight build already uploaded and tested via deploy_internal
+  #   - Git tag must exist for version (e.g., v2.2)
+  #   - Release notes updated in metadata/ios/{locale}/release_notes.txt
+  #   - All app metadata and screenshots up to date
+  #   - App Store Connect API key configured
+  #
+  # STEPS:
+  #   1. Read version from latest git tag
+  #   2. Fetch latest TestFlight build number automatically
+  #   3. Create App Store version
+  #   4. Upload metadata and screenshots
+  #   5. Submit for App Store review
+  #   6. Set automatic release after approval
+  #
+  # WORKFLOW:
+  #   1. Ensure TestFlight build is fully tested in internal testing
+  #   2. Update release notes in metadata/ios/*/release_notes.txt
+  #   3. Create git tag: git tag v2.3
+  #   4. Run: bundle exec fastlane ios promote_to_production
+  #
+  # OUTPUTS:
+  #   - New version created in App Store Connect
+  #   - Metadata and screenshots uploaded
+  #   - App submitted for App Store review
+  #   - Automatic release enabled after approval
+  #
+  # COMMON ERRORS:
+  #   - "No tag found": Create git tag first (git tag v2.3)
+  #   - "No builds found": Upload a build to TestFlight first
+  #   - "Metadata error": Check all required metadata files exist
+  #
+  # DOCUMENTATION:
+  #   - deliver action: https://docs.fastlane.tools/actions/deliver/
+  #   - App Store review: https://developer.apple.com/app-store/review/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios promote_to_production
+  desc "Promote latest TestFlight build to App Store production"
+  lane :promote_to_production do
+    puts "🚀 Promoting latest TestFlight build to App Store production..."
+
+    # Step 1: Set up API authentication
+    setup_api_key
+
+    # Step 2: Read version from git tag
+    puts "   Step 1/4: Reading version from git tag..."
+    begin
+      version = sh("git describe --tags --abbrev=0", log: false).strip.delete_prefix('v')
+      puts "      Version: #{version}"
+    rescue => ex
+      puts "      ❌ No git tag found"
+      puts "         Create a tag first: git tag v2.3"
+      raise "Git tag required for production release"
+    end
+
+    # Step 3: Fetch latest TestFlight build number
+    # Why: Automatically use the latest build from TestFlight (most recently uploaded)
+    puts "   Step 2/4: Fetching latest TestFlight build number..."
+    begin
+      build_number = latest_testflight_build_number(
+        initial_build_number: 1
+      )
+      puts "      Latest TestFlight build: #{build_number}"
+    rescue => ex
+      puts "      ❌ Could not fetch TestFlight builds: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Ensure at least one build exists in TestFlight"
+      puts "         - Run: bundle exec fastlane ios deploy_internal"
+      puts "         - Verify API key has TestFlight access"
+      raise "Failed to fetch TestFlight build number"
+    end
+
+    puts "   Step 3/4: Using TestFlight build number: #{build_number}"
+
+    # Step 4: Submit to App Store with latest build
+    puts "   Step 4/4: Submitting to App Store..."
+    deliver(
+      app_version: version,
+      build_number: build_number.to_s,
+      submit_for_review: true,
+      automatic_release: true,
+      force: true,
+      skip_binary_upload: true,  # Don't upload new IPA, use existing TestFlight build
+      skip_metadata: false,
+      skip_screenshots: false,
+      precheck_include_in_app_purchases: false,
+      metadata_path: "./fastlane/metadata/ios",
+      submission_information: {
+        export_compliance_uses_encryption: false,
+        add_id_info_uses_idfa: false,
+        content_rights_contains_third_party_content: false,
+        content_rights_has_rights: true
+      },
+      app_rating_config_path: "./fastlane/metadata/ios/age_rating_declaration.json"
+    )
+
+    puts "✅ App Store submission complete!"
+    puts ""
+    puts "   Version: #{version}"
+    puts "   Build: #{build_number}"
+    puts "   Status: Submitted for App Store review"
+    puts "   App Store Connect: https://appstoreconnect.apple.com"
+    puts ""
+    puts "   Next steps:"
+    puts "   1. Apple review typically takes 24-48 hours"
+    puts "   2. App will automatically release after approval"
+    puts "   3. Monitor status in App Store Connect"
+  end
+
+  # ---------------------------------------------------------------------------
+  # VERIFY BETA SETUP LANE
+  # ---------------------------------------------------------------------------
+  # This lane performs pre-flight checks before running the beta lane
+  #
+  # PURPOSE:
+  #   Validates that all requirements are met for beta deployment.
+  #   Catches common issues early to prevent deployment failures.
+  #   Run this before your first beta deployment or after configuration changes.
+  #
+  # CHECKS:
+  #   1. API key authentication works
+  #   2. TestFlight access (can fetch build numbers)
+  #   3. Apple Generic Versioning is enabled
+  #   4. Certificates exist in match repository
+  #
+  # WHEN TO RUN:
+  #   - Before first beta deployment (after Phase 46 setup)
+  #   - On new development machines
+  #   - After changing certificates or API keys
+  #   - When troubleshooting beta lane failures
+  #
+  # OUTPUTS:
+  #   - ✅ for each passing check with details
+  #   - ❌ for failing checks with troubleshooting steps
+  #   - Final: "Ready to run: bundle exec fastlane ios beta"
+  #
+  # DOCUMENTATION:
+  #   - API authentication: https://docs.fastlane.tools/app-store-connect-api/
+  #   - Apple Generic Versioning: https://developer.apple.com/library/ios/qa/qa1827/
+  #   - Match setup: https://docs.fastlane.tools/actions/match/
+  #
+  # USAGE:
+  #   bundle exec fastlane ios verify_beta_setup
+  desc "Verify environment is ready for beta deployment"
+  lane :verify_beta_setup do
+    puts "🔍 Verifying beta deployment setup..."
+
+    # Track failures to report at end
+    failures = []
+
+    # Check 1: API key authentication
+    puts "   ✓ Checking App Store Connect API authentication..."
+    begin
+      setup_api_key
+      puts "      ✅ API key valid"
+    rescue => ex
+      puts "      ❌ API key authentication failed: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Check FASTLANE_KEY_* variables in fastlane/.env"
+      puts "         - Verify .p8 file exists at FASTLANE_KEY_FILEPATH"
+      puts "         - Confirm API key has 'App Manager' or 'Admin' role"
+      failures << "API key authentication"
+    end
+
+    # Check 2: TestFlight access
+    puts "   ✓ Checking TestFlight access..."
+    begin
+      latest = latest_testflight_build_number(
+        initial_build_number: 1
+      )
+      puts "      ✅ TestFlight access confirmed"
+      puts "         Latest build number: #{latest}"
+    rescue => ex
+      puts "      ❌ Cannot fetch TestFlight builds: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Verify app exists in App Store Connect"
+      puts "         - Check bundle ID matches: #{ENV["APP_ID"]}"
+      puts "         - Confirm API key has TestFlight access"
+      failures << "TestFlight access"
+    end
+
+    # Check 3: Apple Generic Versioning enabled
+    puts "   ✓ Checking Apple Generic Versioning..."
+    begin
+      current_build = sh(
+        "cd #{ENV['PROJECT_ROOT']}/ios/App && agvtool what-version 2>&1",
+        log: false
+      ).strip
+
+      if current_build.include?("not enabled") || current_build.include?("error")
+        raise "Apple Generic Versioning not enabled"
+      end
+
+      # Extract just the build number from output
+      build_num = current_build.match(/Current version of project .* is:\s*(\d+)/)
+      if build_num
+        puts "      ✅ Apple Generic Versioning enabled"
+        puts "         Current build number: #{build_num[1]}"
+      else
+        puts "      ✅ Apple Generic Versioning enabled"
+        puts "         Output: #{current_build}"
+      end
+    rescue => ex
+      puts "      ❌ Apple Generic Versioning not enabled"
+      puts "         Troubleshooting:"
+      puts "         1. Open ios/App/App.xcodeproj in Xcode"
+      puts "         2. Select App target > Build Settings"
+      puts "         3. Search for 'Versioning System'"
+      puts "         4. Set 'Versioning System' to 'Apple Generic'"
+      puts "         5. Set 'Current Project Version' to 1"
+      puts "         6. Close Xcode and run this check again"
+      failures << "Apple Generic Versioning"
+    end
+
+    # Check 4: Certificates exist
+    puts "   ✓ Checking certificates..."
+    begin
+      match(
+        type: "appstore",
+        app_identifier: ENV["APP_ID"],
+        readonly: true
+      )
+      puts "      ✅ Certificates installed"
+    rescue => ex
+      puts "      ❌ Certificates not available: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Run: bundle exec fastlane ios certificates_appstore"
+      puts "         - Verify MATCH_GIT_URL and MATCH_PASSWORD in .env"
+      puts "         - Check match repository has certificates"
+      failures << "Certificates"
+    end
+
+    # Final report
+    puts ""
+    if failures.empty?
+      puts "✅ All beta deployment checks passed!"
+      puts "   Ready to run: bundle exec fastlane ios beta"
+    else
+      puts "❌ Beta deployment checks failed (#{failures.length}/4)"
+      puts "   Failed checks: #{failures.join(', ')}"
+      puts "   Fix the issues above before running beta lane"
+      UI.user_error!("Beta deployment environment not ready")
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # SCREENSHOTS - Automated screenshot capture for App Store
+  # ---------------------------------------------------------------------------
+  # Captures screenshots across multiple devices and languages using snapshot.
+  # Requires UI tests to be set up (see docs/SCREENSHOTS.md for setup guide).
+  #
+  # USAGE:
+  #   bundle exec fastlane ios screenshots
+  #
+  # REQUIREMENTS:
+  #   - Xcode project with UI test target
+  #   - Snapfile configuration in fastlane/
+  #   - Simulator devices matching Snapfile configuration
+  #
+  # OUTPUT:
+  #   Screenshots saved to fastlane/metadata/ios/{locale}/screenshots/
+  #
+  # DOCUMENTATION:
+  #   https://docs.fastlane.tools/actions/snapshot/
+  desc "Capture iOS screenshots for App Store"
+  lane :screenshots do
+    snapshot
+  end
+
+  # ---------------------------------------------------------------------------
+  # UPDATE METADATA - Update App Store listing without uploading binary
+  # ---------------------------------------------------------------------------
+  # Updates only the metadata (descriptions, screenshots, keywords, etc.) on
+  # App Store Connect without building or uploading a new app binary.
+  #
+  # USE CASES:
+  #   - Fix typos in store descriptions
+  #   - Update screenshots with new visuals
+  #   - Add/update localized metadata
+  #   - Change app subtitle or keywords
+  #   - Update privacy policy URL
+  #
+  # USAGE:
+  #   bundle exec fastlane ios update_metadata
+  #   bundle exec fastlane ios update_metadata app_version:1.0.0  # Specify version
+  #
+  # WHAT IT UPDATES:
+  #   - App name, subtitle, description (all languages)
+  #   - Keywords, privacy URL, release notes
+  #   - Screenshots (all languages and device sizes)
+  #   - Does NOT upload or modify the app binary
+  #
+  # SOURCE:
+  #   Metadata files in fastlane/metadata/ios/{locale}/
+  #   (en-US, de-DE, es-ES, fr-FR, it)
+  #
+  # REQUIREMENTS:
+  #   - App already exists in App Store Connect
+  #   - App version must be in "Prepare for Submission" or "Ready for Sale" state
+  #   - API key configured (FASTLANE_KEY_ID, FASTLANE_ISSUER_ID, FASTLANE_KEY)
+  #   - Metadata files properly formatted in fastlane/metadata/ios/
+  #
+  # TROUBLESHOOTING:
+  #   - "No data" error: You need to specify app_version parameter or have a version
+  #     in "Prepare for Submission" state in App Store Connect
+  #   - First time: Create version manually in App Store Connect first
+  #
+  # DOCUMENTATION:
+  #   https://docs.fastlane.tools/actions/deliver/
+  desc "Update App Store metadata without uploading binary"
+  lane :update_metadata do
+    setup_api_key
+
+     deliver(
+       skip_binary_upload: true,     # Don't upload or modify the binary
+       force: true,                   # Overwrite existing metadata
+       submit_for_review: false,      # Don't auto-submit for review
+       skip_app_version_update: true, # Don't change version number
+       precheck_include_in_app_purchases: false,
+       metadata_path: "./fastlane/metadata/ios",
+       skip_screenshots: false,       # Upload screenshots
+       overwrite_screenshots: true,   # Replace existing screenshots
+       automatic_release: false,      # Don't auto-release
+       # Automatically load age rating from age_rating_declaration.json
+       app_rating_config_path: "./fastlane/metadata/ios/age_rating_declaration.json"
+     )
+
+    puts "✅ App Store metadata updated successfully!"
+    puts "   Updated: descriptions, screenshots, keywords (all languages)"
+    puts "   Not changed: app binary, version number, submission status"
+  end
+end
+
+# =============================================================================
+# Android Platform
+# =============================================================================
+
+platform :android do
+  # ---------------------------------------------------------------------------
+  # DEV LANE
+  # ---------------------------------------------------------------------------
+  # This lane builds Android app for development testing
+  # It syncs web assets and builds APK with debug signing
+  #
+  # PURPOSE:
+  #   Builds a debug APK for local testing on devices.
+  #   This lane is used during development to test on physical devices or emulators.
+  #   Debug APKs are automatically signed with the debug keystore.
+  #
+  # REQUIREMENTS:
+  #   - Android SDK installed
+  #   - ANDROID_HOME environment variable set
+  #   - Gradle configured in android/ directory
+  #
+  # STEPS:
+  #   1. Syncs web assets to native Android project (npx cap sync android)
+  #   2. Builds debug APK using Gradle
+  #
+  # OUTPUT:
+  #   - .apk file in android/app/build/outputs/apk/debug/
+  #
+  # TROUBLESHOOTING:
+  #   - 'SDK location not found': Set ANDROID_HOME in shell profile
+  #   - 'Gradle build failed': Run './gradlew clean' in android/ directory
+  #   - 'Build tools not found': Install required Android SDK build tools
+  #
+  # DOCUMENTATION:
+  #   - Fastlane gradle: https://docs.fastlane.tools/actions/gradle/
+  #   - Capacitor sync: https://capacitorjs.com/docs/cli/commands/sync
+  #   - Android Studio: https://developer.android.com/studio
+  #
+  # USAGE:
+  #   bundle exec fastlane android dev
+  desc "Build Android development app"
+  lane :dev do
+    puts "🤖 Building Android development app..."
+
+    # Call helper lane to sync Capacitor assets
+    sync_capacitor(platform: "android")
+
+    # Step 3: Build Android APK
+    # Why: Creates installable Android app file
+    # Parameters:
+    #   - task: Gradle task to run ("assembleDebug" for dev, "bundleRelease" for store)
+    #   - project_dir: Path to Android project root
+    puts "   Step 3/3: Building Android APK..."
+    gradle(
+      task: "assembleDebug",
+      project_dir: "#{ENV['PROJECT_ROOT']}/android"
+    )
+
+    puts "✅ Android development build complete!"
+    puts "   Location: #{ENV['PROJECT_ROOT']}/android/app/build/outputs/apk/debug/app-debug.apk"
+  end
+
+  # ---------------------------------------------------------------------------
+  # DEPLOY INTERNAL LANE
+  # ---------------------------------------------------------------------------
+  # This lane deploys Android builds to Play Console Internal Testing
+  #
+  # PURPOSE:
+  #   Builds signed AAB and uploads to Google Play Console Internal Testing track.
+  #   Automatically reads version name from git tags and increments version code.
+  #   Internal Testing provides immediate availability (no review required).
+  #   This is the ONLY lane that creates new builds - use promotion lanes to
+  #   move this build through closed testing → production.
+  #
+  # REQUIREMENTS:
+  #   - Android keystore generated (see docs/KEYSTORE_BACKUP_STRATEGY.md)
+  #   - Keystore credentials in fastlane/.env:
+  #     * MYAPP_UPLOAD_STORE_FILE
+  #     * MYAPP_UPLOAD_STORE_PASSWORD
+  #     * MYAPP_UPLOAD_KEY_ALIAS
+  #     * MYAPP_UPLOAD_KEY_PASSWORD
+  #   - Service Account JSON downloaded (see docs/SERVICE_ACCOUNT_SETUP.md)
+  #   - GOOGLE_PLAY_JSON_KEY_PATH in fastlane/.env
+  #   - First upload must be manual via Play Console (Google requirement)
+  #   - Git tag recommended (e.g., v2.2) for version name auto-update
+  #
+  # STEPS:
+  #   1. Read version name from latest git tag (optional, e.g., v2.2 → "2.2")
+  #   2. Set version name in build.gradle to match git tag
+  #   3. Fetch current version code from Play Console Internal Testing track
+  #   4. Increment version code (current + 1)
+  #   5. Sync Capacitor web assets to Android native project
+  #   6. Build signed release AAB with Gradle
+  #   7. Upload to Play Console Internal Testing track
+  #
+  # OUTPUTS:
+  #   - AAB file uploaded to Play Console
+  #   - Build appears in Internal Testing (no review, immediate availability)
+  #   - Version name auto-updated from git tag (if tag exists)
+  #   - Version code auto-incremented in build.gradle
+  #
+  # PROMOTION WORKFLOW:
+  #   After internal testing passes:
+  #   1. bundle exec fastlane android promote_to_closed_testing
+  #   2. After closed testing passes:
+  #   3. bundle exec fastlane android promote_to_production
+  #
+  # COMMON ERRORS:
+  #   - 'Keystore tampered with': Wrong password or corrupted keystore
+  #   - 'Version code already used': Fetch failed, check service account permissions
+  #   - '403 Forbidden': Service account lacks permissions in Play Console
+  #   - 'App not found': First upload must be manual via Play Console
+  #   - 'API not enabled': Enable Google Play Developer API in Cloud Console
+  #
+  # TROUBLESHOOTING:
+  #   See Troubleshooting.md → Android Troubleshooting section
+  #
+  # DOCUMENTATION:
+  #   - Play Console API: https://docs.fastlane.tools/actions/upload_to_play_store/
+  #   - Gradle action: https://docs.fastlane.tools/actions/gradle/
+  #   - Internal Testing: https://support.google.com/googleplay/android-developer/answer/9845334
+  #
+  # USAGE:
+  #   bundle exec fastlane android deploy_internal
+  desc "Deploy Android app to Play Console Internal Testing"
+  lane :deploy_internal do
+    puts "🤖 Starting Android deployment to Play Console Internal Testing..."
+
+    # Step 1: Read version from latest git tag
+    # Why: Version name (user-facing) comes from git tags, same as iOS
+    # Parameters:
+    #   - git describe --tags --abbrev=0 = Get latest tag (e.g., "v2.2")
+    #   - delete_prefix('v') = Strip 'v' prefix (v2.2 → "2.2")
+    # Output: version = "2.2"
+    puts "   Step 1/7: Reading version from git tag..."
+    begin
+      version = sh("git describe --tags --abbrev=0", log: false).strip.delete_prefix('v')
+      puts "      Version: #{version}"
+    rescue => ex
+      puts "      ⚠️  No git tag found, keeping existing version name"
+      puts "         To auto-update version: git tag v2.3 && git push origin v2.3"
+      puts "         Error: #{ex.message}"
+      version = nil
+    end
+
+    # Step 2: Set version name in build.gradle (if git tag exists)
+    # Why: Sync version name to match git tag (same behavior as iOS)
+    # Parameters:
+    #   - gradle_file: Path to app build.gradle
+    #   - version_name: Version from git tag
+    # Output: versionName updated in build.gradle
+    if version
+      puts "   Step 2/7: Setting version name..."
+      android_set_version_name(
+        gradle_file: "#{ENV['PROJECT_ROOT']}/android/app/build.gradle",
+        version_name: version
+      )
+      puts "      Version name set to: #{version}"
+    else
+      puts "   Step 2/7: Skipping version name update (no git tag)"
+    end
+
+    # Step 3: Fetch current version code from Play Console
+    # Why: Prevents duplicate version code upload failures
+    # Returns: Highest version code from internal track, or 0 if no uploads exist
+    puts "   Step 3/7: Fetching current version code from Play Console..."
+    begin
+      current_version_codes = google_play_track_version_codes(
+        track: "internal",
+        json_key: ENV["GOOGLE_PLAY_JSON_KEY_PATH"]
+      )
+      current_version_code = current_version_codes.max || 0
+    rescue => ex
+      # If track doesn't exist yet or no builds, default to 0
+      puts "      ⚠️  Could not fetch version codes (track may be empty): #{ex.message}"
+      puts "      Using default version code: 0"
+      current_version_code = 0
+    end
+    puts "      Current version code: #{current_version_code}"
+
+    # Step 4: Increment version code
+    # Why: Play Console requires unique, increasing version code for each upload
+    # Uses: Gradle's versionCode property in android/app/build.gradle
+    puts "   Step 4/7: Incrementing version code..."
+    new_version_code = current_version_code + 1
+    android_set_version_code(
+      gradle_file: "#{ENV['PROJECT_ROOT']}/android/app/build.gradle",
+      version_code: new_version_code
+    )
+    puts "      New version code: #{new_version_code}"
+
+    # Step 5: Sync Capacitor web assets
+    # Why: Ensure native Android app contains latest web build
+    # Output: Updated android/app/src/main/assets/public/ directory
+    puts "   Step 5/7: Syncing Capacitor web assets..."
+    sync_capacitor(platform: "android")
+
+    # Step 6: Build signed release AAB
+    # Why: Creates signed AAB file ready for Play Console upload
+    # Parameters:
+    #   - task: "bundle" = Build AAB (not APK)
+    #   - build_type: "Release" = Release configuration with signing
+    #   - project_dir: Path to Android project root
+    #   - properties: Pass keystore credentials to Gradle
+    # Output: android/app/build/outputs/bundle/release/app-release.aab
+    puts "   Step 6/7: Building signed Android App Bundle..."
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "#{ENV['PROJECT_ROOT']}/android",
+      properties: {
+        "MYAPP_UPLOAD_STORE_FILE" => ENV["MYAPP_UPLOAD_STORE_FILE"],
+        "MYAPP_UPLOAD_STORE_PASSWORD" => ENV["MYAPP_UPLOAD_STORE_PASSWORD"],
+        "MYAPP_UPLOAD_KEY_ALIAS" => ENV["MYAPP_UPLOAD_KEY_ALIAS"],
+        "MYAPP_UPLOAD_KEY_PASSWORD" => ENV["MYAPP_UPLOAD_KEY_PASSWORD"]
+      }
+    )
+
+    # Get AAB path from Gradle output
+    aab_path = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    puts "      AAB built: #{aab_path}"
+
+    # Step 7: Upload to Play Console Internal Testing
+    # Why: Makes build available to internal testers
+    # Parameters:
+    #   - track: 'internal' = Internal Testing track (no review required)
+    #   - aab: Path to signed AAB file from Gradle
+    #   - json_key: Service Account JSON for authentication
+    #   - package_name: App's package name (must match capacitor.config.ts)
+    #   - skip_upload_*: Don't upload metadata/images (just the binary)
+    puts "   Step 7/7: Uploading to Play Console Internal Testing..."
+    upload_to_play_store(
+      track: 'internal',
+      aab: aab_path,
+      json_key: ENV["GOOGLE_PLAY_JSON_KEY_PATH"],
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      skip_upload_changelogs: false
+    )
+
+    puts "✅ Android deployment to internal testing complete!"
+    puts ""
+    if version
+      puts "   Version: #{version} (#{new_version_code})"
+    else
+      puts "   Version code: #{new_version_code}"
+    end
+    puts "   AAB: #{aab_path}"
+    puts "   Play Console: https://play.google.com/console"
+    puts ""
+    puts "   Next steps:"
+    puts "   1. Test in Internal Testing track"
+    puts "   2. When ready: bundle exec fastlane android promote_to_closed_testing"
+    puts "   3. After closed testing: bundle exec fastlane android promote_to_production"
+  end
+
+  # ---------------------------------------------------------------------------
+  # PROMOTE TO CLOSED TESTING LANE
+  # ---------------------------------------------------------------------------
+  # This lane promotes the latest internal track version to closed testing
+  #
+  # PURPOSE:
+  #   Promotes the currently latest version from internal testing track to
+  #   closed testing track. Does not build or upload a new AAB, just updates
+  #   the track to use the latest internal testing version.
+  #
+  # REQUIREMENTS:
+  #   - Service Account JSON downloaded (see docs/SERVICE_ACCOUNT_SETUP.md)
+  #   - GOOGLE_PLAY_JSON_KEY_PATH in fastlane/.env
+  #   - At least one version available in internal testing track
+  #   - Closed testing track configured in Play Console
+  #
+  # STEPS:
+  #   1. Fetch latest version code from internal testing track
+  #   2. Promote that version to closed testing track
+  #
+  # OUTPUTS:
+  #   - Latest internal version appears in closed testing track
+  #   - No new build created
+  #   - No metadata or screenshots updated
+  #
+  # COMMON ERRORS:
+  #   - 'No version found in internal': Upload a build to internal first
+  #   - '403 Forbidden': Service account lacks permissions in Play Console
+  #   - 'Track not found': Create closed testing track in Play Console first
+  #
+  # TROUBLESHOOTING:
+  #   See Troubleshooting.md → Android Troubleshooting section
+  #
+  # DOCUMENTATION:
+  #   - Play Console API: https://docs.fastlane.tools/actions/upload_to_play_store/
+  #   - Track promotion: https://support.google.com/googleplay/android-developer/answer/9845334
+  #
+  # USAGE:
+  #   bundle exec fastlane android promote_to_closed_testing
+  desc "Promote latest internal track version to closed testing"
+  lane :promote_to_closed_testing do
+    puts "🤖 Promoting latest internal version to closed testing..."
+
+    # Step 1: Fetch latest version code from internal testing track
+    # Why: Need to know which version to promote
+    # Returns: Array of version codes from internal track
+    puts "   Step 1/2: Fetching latest version from internal testing..."
+    begin
+      internal_version_codes = google_play_track_version_codes(
+        track: "internal",
+        json_key: ENV["GOOGLE_PLAY_JSON_KEY_PATH"]
+      )
+
+      if internal_version_codes.nil? || internal_version_codes.empty?
+        raise "No versions found in internal testing track"
+      end
+
+      latest_version_code = internal_version_codes.max
+      puts "      Latest internal version code: #{latest_version_code}"
+    rescue => ex
+      puts "      ❌ Could not fetch internal track versions: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Ensure at least one build exists in internal testing"
+      puts "         - Run: bundle exec fastlane android beta (to upload to internal)"
+      puts "         - Verify service account has Play Console access"
+      raise "Failed to fetch internal track versions"
+    end
+
+    # Step 2: Promote to closed testing track
+    # Why: Moves the version to closed testing without rebuilding
+    # Parameters:
+    #   - track: 'closed' = Closed testing track
+    #   - version_code: Latest version code from internal track
+    #   - skip_upload_*: Don't upload any files, just update track
+    puts "   Step 2/2: Promoting version #{latest_version_code} to closed testing..."
+    upload_to_play_store(
+      track: 'internal',
+      track_promote_to: 'alpha',
+      version_code: latest_version_code,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true
+    )
+
+    puts "✅ Promotion to closed testing complete!"
+    puts ""
+    puts "   Version code: #{latest_version_code}"
+    puts "   Track: closed testing"
+    puts "   Play Console: https://play.google.com/console"
+    puts ""
+    puts "   Next steps:"
+    puts "   1. Test in Closed Testing track"
+    puts "   2. When ready: bundle exec fastlane android promote_to_production"
+  end
+
+  # ---------------------------------------------------------------------------
+  # PROMOTE TO PRODUCTION LANE
+  # ---------------------------------------------------------------------------
+  # This lane promotes the latest closed testing version to production
+  #
+  # PURPOSE:
+  #   Promotes the currently latest version from closed testing track to
+  #   production track. Does not build or upload a new AAB, just updates
+  #   the track to use the latest closed testing version with 100% rollout.
+  #
+  # REQUIREMENTS:
+  #   - Service Account JSON downloaded (see docs/SERVICE_ACCOUNT_SETUP.md)
+  #   - GOOGLE_PLAY_JSON_KEY_PATH in fastlane/.env
+  #   - At least one version available in closed testing track
+  #   - Service account must have production release permissions
+  #
+  # STEPS:
+  #   1. Fetch latest version code from closed testing track
+  #   2. Promote that version to production track (100% rollout)
+  #
+  # OUTPUTS:
+  #   - Latest closed testing version appears in production track
+  #   - No new build created
+  #   - No metadata or screenshots updated
+  #   - 100% rollout (immediate release to all users)
+  #
+  # COMMON ERRORS:
+  #   - 'No version found in closed': Upload to closed testing first
+  #   - '403 Forbidden': Service account lacks production permissions
+  #   - 'Version already in production': Version is already released
+  #
+  # TROUBLESHOOTING:
+  #   See Troubleshooting.md → Android Troubleshooting section
+  #
+  # DOCUMENTATION:
+  #   - Play Console API: https://docs.fastlane.tools/actions/upload_to_play_store/
+  #   - Track promotion: https://support.google.com/googleplay/android-developer/answer/9845334
+  #
+  # USAGE:
+  #   bundle exec fastlane android promote_to_production
+  desc "Promote latest closed testing version to production"
+  lane :promote_to_production do
+    puts "🚀 Promoting latest closed testing version to production..."
+
+    # Step 1: Fetch latest version code from closed testing track
+    # Why: Need to know which version to promote
+    # Returns: Array of version codes from closed testing track
+    puts "   Step 1/2: Fetching latest version from closed testing..."
+    begin
+      closed_version_codes = google_play_track_version_codes(
+        track: "alpha",
+        json_key: ENV["GOOGLE_PLAY_JSON_KEY_PATH"]
+      )
+
+      if closed_version_codes.nil? || closed_version_codes.empty?
+        raise "No versions found in closed testing track"
+      end
+
+      latest_version_code = closed_version_codes.max
+      puts "      Latest closed testing version code: #{latest_version_code}"
+    rescue => ex
+      puts "      ❌ Could not fetch closed testing track versions: #{ex.message}"
+      puts "         Troubleshooting:"
+      puts "         - Ensure at least one build exists in closed testing"
+      puts "         - Run: bundle exec fastlane android promote_to_closed_testing"
+      puts "         - Verify service account has Play Console access"
+      raise "Failed to fetch closed testing track versions"
+    end
+
+    # Step 2: Promote to production track
+    # Why: Moves the version to production without rebuilding
+    # Parameters:
+    #   - track: 'alpha' = Promote from closed testing
+    #   - track_promote_to: 'production' = Target track
+    #   - version_code: Latest version code from closed testing track
+    #   - rollout: '1.0' = 100% rollout (immediate release to all users)
+    #   - skip_upload_*: Don't upload any files, just update track
+    puts "   Step 2/2: Promoting version #{latest_version_code} to production (100% rollout)..."
+    upload_to_play_store(
+      track: 'alpha',
+      track_promote_to: 'production',
+      version_code: latest_version_code,
+      rollout: '1.0',
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true
+    )
+
+    puts "✅ Promotion to production complete!"
+    puts ""
+    puts "   Version code: #{latest_version_code}"
+    puts "   Track: production"
+    puts "   Rollout: 100% (immediate)"
+    puts "   Play Console: https://play.google.com/console"
+    puts ""
+    puts "   🎉 Your app is now live in production!"
+    puts "   📊 Monitor rollout in Play Console → Production track"
+  end
+
+  # ---------------------------------------------------------------------------
+  # BETA DRYRUN LANE
+  # ---------------------------------------------------------------------------
+  # This lane tests the entire beta deployment without uploading
+  #
+  # PURPOSE:
+  #   Tests complete beta build workflow (version name update, sync, build AAB)
+  #   WITHOUT uploading to Play Console. Useful for validating build infrastructure
+  #   before real uploads.
+  #
+  # WHEN TO USE:
+  #   - First-time beta setup: Verify build process works end-to-end
+  #   - After keystore changes: Confirm signing works correctly
+  #   - Practice builds: Test process without consuming version codes
+  #   - CI/CD testing: Validate build automation without uploading
+  #
+  # DIFFERENCE FROM BETA LANE:
+  #   - Reads version name from git tags (same as beta)
+  #   - Skips google_play_track_version_codes fetch (no API call)
+  #   - Builds AAB with signing (tests keystore)
+  #   - Does NOT upload to Play Console
+  #   - Does NOT increment remote version code
+  #
+  # REQUIREMENTS:
+  #   - Same as beta lane (keystore credentials, service account)
+  #   - Service account optional (since no upload)
+  #
+  # OUTPUTS:
+  #   - AAB file built locally
+  #   - Confirms build and signing infrastructure works
+  #   - No version code consumed
+  #   - No upload to Play Console
+  #
+  # DOCUMENTATION:
+  #   - Gradle action: https://docs.fastlane.tools/actions/gradle/
+  #
+  # USAGE:
+  #   bundle exec fastlane android dry_run
+  desc "Test Android beta build without uploading (dry-run)"
+  lane :dry_run do
+    puts "🧪 Testing Android beta build (dry-run mode)..."
+    puts "   NOTE: Will build AAB but NOT upload to Play Console"
+
+    # Step 1: Read version from latest git tag
+    # Why: Version name (user-facing) comes from git tags, same as iOS
+    puts "   Step 1/5: Reading version from git tag..."
+    begin
+      version = sh("git describe --tags --abbrev=0", log: false).strip.delete_prefix('v')
+      puts "      Version: #{version}"
+    rescue => ex
+      puts "      ⚠️  No git tag found, keeping existing version name"
+      puts "         Error: #{ex.message}"
+      version = nil
+    end
+
+    # Step 2: Set version name in build.gradle (if git tag exists)
+    # Why: Sync version name to match git tag (same behavior as iOS)
+    if version
+      puts "   Step 2/5: Setting version name..."
+      android_set_version_name(
+        gradle_file: "#{ENV['PROJECT_ROOT']}/android/app/build.gradle",
+        version_name: version
+      )
+      puts "      Version name set to: #{version}"
+    else
+      puts "   Step 2/5: Skipping version name update (no git tag)"
+    end
+
+    # Step 3: Use local version code (no API fetch)
+    # Why: Dry-run shouldn't consume API calls or version codes
+    puts "   Step 3/5: Using local version code (dry-run mode)..."
+    # Just read current value from build.gradle, don't increment remotely
+    current_version_code = 1 # Default for dry-run testing
+    puts "      Test version code: #{current_version_code}"
+
+    # Step 4: Sync Capacitor assets
+    # Why: Ensure we're testing with real web content
+    puts "   Step 4/5: Syncing Capacitor web assets..."
+    sync_capacitor(platform: "android")
+
+    # Step 5: Build signed release AAB
+    # Why: Tests complete build process including keystore signing
+    puts "   Step 5/5: Building signed Android App Bundle..."
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "#{ENV['PROJECT_ROOT']}/android",
+      properties: {
+        "MYAPP_UPLOAD_STORE_FILE" => ENV["MYAPP_UPLOAD_STORE_FILE"],
+        "MYAPP_UPLOAD_STORE_PASSWORD" => ENV["MYAPP_UPLOAD_STORE_PASSWORD"],
+        "MYAPP_UPLOAD_KEY_ALIAS" => ENV["MYAPP_UPLOAD_KEY_ALIAS"],
+        "MYAPP_UPLOAD_KEY_PASSWORD" => ENV["MYAPP_UPLOAD_KEY_PASSWORD"]
+      }
+    )
+
+    aab_path = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    puts "      AAB built: #{aab_path}"
+
+    puts "✅ Dry-run complete! Build succeeded but NOT uploaded."
+    puts ""
+    if version
+      puts "   Version: #{version}"
+    end
+    puts "   AAB: #{aab_path}"
+    puts ""
+    puts "   What happened:"
+    if version
+      puts "   ✓ Version name set from git tag: #{version}"
+    else
+      puts "   ⚠ Version name unchanged (no git tag)"
+    end
+    puts "   ✓ Capacitor assets synced"
+    puts "   ✓ AAB built and signed"
+    puts "   ✗ Upload skipped (dry-run)"
+    puts ""
+    puts "   Next steps:"
+    puts "   - Verify AAB exists at path above"
+    puts "   - This confirms your build infrastructure works"
+    puts "   - Ready to run: bundle exec fastlane android beta (full upload)"
+  end
+
+  # ---------------------------------------------------------------------------
+  # VERIFY SETUP LANE
+  # ---------------------------------------------------------------------------
+  # This lane performs pre-flight checks before running beta lane
+  #
+  # PURPOSE:
+  #   Validates that all requirements are met for beta deployment.
+  #   Catches common issues early to prevent deployment failures.
+  #   Run this before your first beta deployment or after configuration changes.
+  #
+  # CHECKS:
+  #   1. Keystore environment variables are set
+  #   2. Service Account JSON file exists
+  #   3. Gradle can access keystore credentials
+  #   4. Android SDK is available
+  #
+  # WHEN TO RUN:
+  #   - Before first beta deployment (after Phase 48 setup)
+  #   - On new development machines
+  #   - After changing keystore or service account
+  #   - When troubleshooting beta lane failures
+  #
+  # OUTPUTS:
+  #   - ✅ for each passing check with details
+  #   - ❌ for failing checks with troubleshooting steps
+  #   - Final: "Ready to run: bundle exec fastlane android beta"
+  #
+  # DOCUMENTATION:
+  #   - Service Account setup: See docs/SERVICE_ACCOUNT_SETUP.md
+  #   - Keystore backup: See docs/KEYSTORE_BACKUP_STRATEGY.md
+  #
+  # USAGE:
+  #   bundle exec fastlane android verify_setup
+  desc "Verify environment is ready for Android beta deployment"
+  lane :verify_setup do
+    puts "🔍 Verifying Android beta deployment setup..."
+
+    # Track failures to report at end
+    failures = []
+
+    # Check 1: Keystore environment variables
+    puts "   ✓ Checking keystore environment variables..."
+    keystore_vars = [
+      "MYAPP_UPLOAD_STORE_FILE",
+      "MYAPP_UPLOAD_STORE_PASSWORD",
+      "MYAPP_UPLOAD_KEY_ALIAS",
+      "MYAPP_UPLOAD_KEY_PASSWORD"
+    ]
+
+    missing_vars = keystore_vars.select { |var| ENV[var].nil? || ENV[var].empty? }
+
+    if missing_vars.empty?
+      puts "      ✅ All keystore variables set"
+    else
+      puts "      ❌ Missing keystore variables: #{missing_vars.join(', ')}"
+      puts "         Troubleshooting:"
+      puts "         - Check fastlane/.env file exists"
+      puts "         - Verify all keystore variables are set"
+      puts "         - See docs/KEYSTORE_BACKUP_STRATEGY.md for setup"
+      failures << "Keystore environment variables"
+    end
+
+    # Check 2: Service Account JSON file
+    puts "   ✓ Checking Service Account JSON..."
+    json_key_path = ENV["GOOGLE_PLAY_JSON_KEY_PATH"]
+
+    if json_key_path && File.exist?(File.join(ENV['PROJECT_ROOT'], json_key_path))
+      puts "      ✅ Service Account JSON found"
+      puts "         Path: #{json_key_path}"
+    elsif json_key_path
+      puts "      ❌ Service Account JSON not found at: #{json_key_path}"
+      puts "         Troubleshooting:"
+      puts "         - Check GOOGLE_PLAY_JSON_KEY_PATH in fastlane/.env"
+      puts "         - Verify JSON file exists at specified path"
+      puts "         - See docs/SERVICE_ACCOUNT_SETUP.md for setup"
+      failures << "Service Account JSON file"
+    else
+      puts "      ❌ GOOGLE_PLAY_JSON_KEY_PATH not set"
+      puts "         Troubleshooting:"
+      puts "         - Add GOOGLE_PLAY_JSON_KEY_PATH to fastlane/.env"
+      puts "         - See docs/SERVICE_ACCOUNT_SETUP.md for setup"
+      failures << "Service Account JSON path"
+    end
+
+    # Check 3: Keystore file exists
+    puts "   ✓ Checking keystore file..."
+    keystore_file = ENV["MYAPP_UPLOAD_STORE_FILE"]
+
+    if keystore_file && File.exist?(File.join(ENV['PROJECT_ROOT'], 'android', 'app', keystore_file))
+      puts "      ✅ Keystore file found"
+      puts "         File: #{keystore_file}"
+    elsif keystore_file
+      puts "      ❌ Keystore file not found: android/app/#{keystore_file}"
+      puts "         Troubleshooting:"
+      puts "         - Generate keystore: See docs/KEYSTORE_BACKUP_STRATEGY.md"
+      puts "         - Verify MYAPP_UPLOAD_STORE_FILE path is correct"
+      failures << "Keystore file"
+    else
+      puts "      ❌ MYAPP_UPLOAD_STORE_FILE not set"
+      failures << "Keystore file path"
+    end
+
+    # Check 4: Android SDK
+    puts "   ✓ Checking Android SDK..."
+    android_home = ENV["ANDROID_HOME"]
+
+    if android_home && Dir.exist?(android_home)
+      puts "      ✅ ANDROID_HOME set"
+      puts "         Path: #{android_home}"
+    else
+      puts "      ❌ ANDROID_HOME not set or invalid"
+      puts "         Troubleshooting:"
+      puts "         - Install Android SDK via Android Studio"
+      puts "         - Set ANDROID_HOME in shell profile"
+      puts "         - Typical path: ~/Library/Android/sdk (macOS)"
+      failures << "Android SDK"
+    end
+
+    # Final report
+    puts ""
+    if failures.empty?
+      puts "✅ All beta deployment checks passed!"
+      puts "   Ready to run: bundle exec fastlane android beta"
+    else
+      puts "❌ Beta deployment checks failed (#{failures.length}/4)"
+      puts "   Failed checks: #{failures.join(', ')}"
+      puts "   Fix the issues above before running beta lane"
+      UI.user_error!("Beta deployment environment not ready")
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # SCREENSHOTS - Automated screenshot capture for Play Store
+  # ---------------------------------------------------------------------------
+  # Captures screenshots across multiple locales using screengrab.
+  # Requires instrumented tests to be set up (see docs/SCREENSHOTS.md).
+  #
+  # USAGE:
+  #   bundle exec fastlane android screenshots
+  #
+  # REQUIREMENTS:
+  #   - Android project with instrumented test
+  #   - Screengrabfile configuration in fastlane/
+  #   - Emulator or connected device
+  #
+  # OUTPUT:
+  #   Screenshots saved to fastlane/metadata/android/{locale}/images/phoneScreenshots/
+  #
+  # DOCUMENTATION:
+  #   https://docs.fastlane.tools/actions/screengrab/
+  desc "Capture Android screenshots for Play Store"
+  lane :screenshots do
+    screengrab
+  end
+
+  # ---------------------------------------------------------------------------
+  # RELEASE LANE (Placeholder for Phase 50)
+  # ---------------------------------------------------------------------------
+  # UPDATE METADATA INTERNAL - Update Play Store internal track metadata
+  # ---------------------------------------------------------------------------
+  # Updates metadata for the internal testing track without uploading a new APK/AAB.
+  #
+  # ANDROID METADATA SCOPE:
+  #   Store listing metadata (title, descriptions, screenshots) is PROJECT-WIDE
+  #   and applies to ALL tracks (internal, production). Updating metadata here
+  #   updates the entire app listing in Play Console.
+  #
+  #   CHANGELOGS are track-specific and version-specific, so they are NOT
+  #   updated by this lane. Use the deploy_internal lane to update changelogs
+  #   when uploading new binaries.
+  #
+  # USE CASES:
+  #   - Update store listing before promoting internal → production
+  #   - Fix typos in descriptions or screenshots
+  #   - Add/update localized metadata
+  #   - Refresh screenshots with updated UI
+  #
+  # USAGE:
+  #   bundle exec fastlane android update_metadata_internal
+  #
+  # WHAT IT UPDATES:
+  #   - Store listing: title, short description, full description (PROJECT-WIDE)
+  #   - Screenshots: all languages and device sizes (PROJECT-WIDE)
+  #   - Does NOT update changelogs (use deploy_internal lane for that)
+  #   - Does NOT upload or modify the APK/AAB binary
+  #
+  # SOURCE:
+  #   Metadata files in fastlane/metadata/android/{locale}/
+  #   (title.txt, short_description.txt, full_description.txt, images/)
+  #
+  # REQUIREMENTS:
+  #   - App already exists in Play Console
+  #   - Service account JSON configured (SUPPLY_JSON_KEY_DATA or SUPPLY_JSON_KEY)
+  #   - Metadata files properly formatted in fastlane/metadata/android/
+  #
+  # DOCUMENTATION:
+  #   https://docs.fastlane.tools/actions/supply/
+  desc "Update Play Store metadata for internal track"
+  lane :update_metadata_internal do
+    supply(
+      track: 'internal',
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: false,     # Upload metadata (project-wide)
+      skip_upload_changelogs: true,    # Skip changelogs (need version code)
+      skip_upload_images: false,       # Upload screenshots (project-wide)
+      skip_upload_screenshots: false   # Upload screenshots (project-wide)
+    )
+
+    puts "✅ Play Store metadata updated successfully!"
+    puts "   Updated: store listing (project-wide), screenshots"
+    puts "   Not changed: APK/AAB binary, version code, changelogs"
+    puts "   💡 To update changelogs, use the beta lane when uploading a new binary"
+  end
+
+  # ---------------------------------------------------------------------------
+  # UPDATE METADATA PRODUCTION - Update Play Store production track metadata
+  # ---------------------------------------------------------------------------
+  # Updates metadata for the production track without uploading a new APK/AAB.
+  #
+  # ANDROID METADATA SCOPE:
+  #   Store listing metadata (title, descriptions, screenshots) is PROJECT-WIDE
+  #   and applies to ALL tracks (internal, production). Updating metadata here
+  #   updates the entire app listing in Play Console.
+  #
+  #   CHANGELOGS are track-specific and version-specific, so they are NOT
+  #   updated by this lane. Use the release lane to update changelogs
+  #   when uploading new binaries.
+  #
+  # USE CASES:
+  #   - Fix typos in store listing after launch
+  #   - Update screenshots based on user feedback
+  #   - Add/update localized metadata post-launch
+  #   - Refresh store assets without releasing new version
+  #
+  # USAGE:
+  #   bundle exec fastlane android update_metadata_production
+  #
+  # WHAT IT UPDATES:
+  #   - Store listing: title, short description, full description (PROJECT-WIDE)
+  #   - Screenshots: all languages and device sizes (PROJECT-WIDE)
+  #   - Does NOT update changelogs (use release lane for that)
+  #   - Does NOT upload or modify the APK/AAB binary
+  #
+  # SOURCE:
+  #   Metadata files in fastlane/metadata/android/{locale}/
+  #   (title.txt, short_description.txt, full_description.txt, images/)
+  #
+  # REQUIREMENTS:
+  #   - App already exists in Play Console production track
+  #   - Service account JSON configured (SUPPLY_JSON_KEY_DATA or SUPPLY_JSON_KEY)
+  #   - Metadata files properly formatted in fastlane/metadata/android/
+  #
+  # DOCUMENTATION:
+  #   https://docs.fastlane.tools/actions/supply/
+  desc "Update Play Store metadata for production track"
+  lane :update_metadata_production do
+    supply(
+      track: 'production',
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: false,     # Upload metadata (project-wide)
+      skip_upload_changelogs: true,    # Skip changelogs (need version code)
+      skip_upload_images: false,       # Upload screenshots (project-wide)
+      skip_upload_screenshots: false   # Upload screenshots (project-wide)
+    )
+
+    puts "✅ Play Store metadata updated successfully!"
+    puts "   Updated: store listing (project-wide), screenshots"
+    puts "   Not changed: APK/AAB binary, version code, changelogs"
+    puts "   💡 To update changelogs, use the deploy_internal lane when uploading a new binary"
+  end
+end
+
+# =============================================================================
+# Helper Lanes (Shared across platforms)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# VERIFY SETUP
+# -----------------------------------------------------------------------------
+# This helper lane validates that the development environment is properly configured
+#
+# PURPOSE:
+#   Checks for required tools, environment variables, and configurations.
+#   Provides helpful error messages if something is missing.
+#
+# CHECKS:
+#   - Ruby version compatibility
+#   - Bundler installation
+#   - Capacitor config exists
+#   - iOS: Xcode command line tools
+#   - Android: ANDROID_HOME variable
+#
+# USAGE:
+#   bundle exec fastlane verify_setup
+desc "Verify development environment setup"
+lane :verify_setup do
+  puts "🔍 Verifying development environment..."
+
+  # Check Ruby version
+  ruby_version = `ruby --version`.strip
+  puts "   ✓ Ruby: #{ruby_version}"
+
+  # Check Bundler
+  bundler_version = `bundle --version`.strip
+  puts "   ✓ Bundler: #{bundler_version}"
+
+  # Check Capacitor config
+  capacitor_config = "#{ENV['PROJECT_ROOT']}/capacitor.config.ts"
+  if File.exist?(capacitor_config)
+    puts "   ✓ Capacitor config: Found"
+  else
+    puts "   ✗ Capacitor config: Not found at #{capacitor_config}"
+  end
+
+  # Check iOS setup
+  xcode_path = `xcode-select -p 2>/dev/null`.strip
+  if xcode_path != ""
+    puts "   ✓ Xcode: #{xcode_path}"
+  else
+    puts "   ⚠ Xcode: Not found (required for iOS builds)"
+  end
+
+  # Check Android setup
+  android_home = ENV["ANDROID_HOME"]
+  if android_home && Dir.exist?(android_home)
+    puts "   ✓ ANDROID_HOME: #{android_home}"
+  else
+    puts "   ⚠ ANDROID_HOME: Not set (required for Android builds)"
+  end
+
+  puts "✅ Environment verification complete!"
+end
+
+# -----------------------------------------------------------------------------
+# SYNC CAPACITOR
+# -----------------------------------------------------------------------------
+# This helper lane syncs pre-built web assets to native projects
+#
+# PURPOSE:
+#   Copies pre-built SvelteKit web assets to iOS/Android native projects.
+#   Must run before every native build to ensure native apps have latest web code.
+#
+# PREREQUISITES:
+#   The SvelteKit web app must be built BEFORE calling this lane.
+#   Build the web app externally (e.g., via turbo/pnpm) to leverage build caching:
+#     pnpm run build (from the project root)
+#
+# PARAMETERS:
+#   - platform: "ios" or "android"
+#
+# STEPS:
+#   1. Sync to native project (npx cap sync [platform])
+#
+# WHY NEEDED:
+#   Capacitor hybrid apps consist of:
+#     - Web app (SvelteKit) - built to build/ directory
+#     - Native shell (iOS/Android) - contains webview that loads web app
+#   Sync copies web app into native shell's assets directory.
+#   Without sync, native app shows stale web content.
+#
+# DOCUMENTATION:
+#   - Capacitor sync: https://capacitorjs.com/docs/cli/commands/sync
+#   - SvelteKit static adapter: https://kit.svelte.dev/docs/adapter-static
+#
+# USAGE:
+#   sync_capacitor(platform: "ios")
+#   sync_capacitor(platform: "android")
+desc "Sync pre-built web assets to native project"
+lane :sync_capacitor do |options|
+  platform = options[:platform]
+
+  puts "   Syncing to #{platform} native project..."
+  # Why: Copies build/ folder to native project's assets directory
+  # iOS: ios/App/App/public/
+  # Android: android/app/src/main/assets/public/
+  # Also updates native config (Info.plist, AndroidManifest.xml)
+  # NOTE: The SvelteKit web app must be built before running this lane.
+  sh("cd #{ENV['PROJECT_ROOT']} && npx cap sync #{platform}")
+end
+
+# -----------------------------------------------------------------------------
+# ALL SCREENSHOTS - Capture and frame for both platforms
+# -----------------------------------------------------------------------------
+# This lane captures screenshots for both iOS and Android, then frames iOS screenshots
+#
+# PURPOSE:
+#   Automates complete screenshot workflow for both platforms in one command.
+#   iOS screenshots are framed with device mockups; Android screenshots remain unframed.
+#
+# REQUIREMENTS:
+#   - All iOS and Android screenshot requirements met
+#   - UI tests configured for both platforms
+#   - Simulators/emulators available
+#
+# STEPS:
+#   1. Capture iOS screenshots via snapshot
+#   2. Capture Android screenshots via screengrab
+#   3. Frame iOS screenshots with frameit
+#
+# DOCUMENTATION:
+#   - Snapshot: https://docs.fastlane.tools/actions/snapshot/
+#   - Screengrab: https://docs.fastlane.tools/actions/screengrab/
+#   - Frameit: https://docs.fastlane.tools/actions/frameit/
+#
+# USAGE:
+#   bundle exec fastlane all_screenshots
+desc "Capture all screenshots for both platforms"
+lane :all_screenshots do
+  Fastlane::LaneManager.cruise_lane("ios", "screenshots")
+  Fastlane::LaneManager.cruise_lane("android", "screenshots")
+  # Frame iOS screenshots (Android doesn't typically use device frames)
+  Fastlane::LaneManager.cruise_lane("ios", "custom_frame_screenshots")
+end
+
+# =============================================================================
+# Lifecycle Hooks
+# =============================================================================
+
+# after_all runs after successful lane completion
+# Use for notifications or cleanup
+after_all do |lane|
+  puts "✨ Lane #{lane} completed successfully!"
+end
+
+# error block runs when lane fails
+# Use for error notifications or cleanup with troubleshooting hints
+error do |lane, exception|
+  puts "❌ Lane #{lane} failed with error:"
+  puts "   #{exception.message}"
+
+  # Provide context-specific troubleshooting hints
+  if exception.message.include?("No signing identity") || exception.message.include?("code signing")
+    puts ""
+    puts "💡 Troubleshooting: Code signing issue detected."
+    puts "   Possible solutions:"
+    puts "   - Phase 46 implements certificate management"
+    puts "   - Check: Xcode > Settings > Accounts > Download Manual Profiles"
+    puts "   - Docs: https://docs.fastlane.tools/codesigning/getting-started/"
+  elsif exception.message.downcase.include?("capacitor")
+    puts ""
+    puts "💡 Troubleshooting: Capacitor sync failed."
+    puts "   Possible solutions:"
+    puts "   - Ensure capacitor.config.ts exists in project root"
+    puts "   - Run: cd #{ENV['PROJECT_ROOT']} && npx cap sync manually to see full error"
+    puts "   - Check: ios/ and android/ directories exist"
+  elsif exception.message.include?("Scheme") || exception.message.include?("workspace") || exception.message.include?("project")
+    puts ""
+    puts "💡 Troubleshooting: Xcode project issue."
+    puts "   Possible solutions:"
+    puts "   - Verify: #{ENV['PROJECT_ROOT']}/ios/App/App.xcodeproj exists"
+    puts "   - Run: npx cap sync ios to regenerate project"
+    puts "   - Check: Open project in Xcode and verify scheme is shared"
+  elsif exception.message.downcase.include?("gradle") || exception.message.include?("build failed")
+    puts ""
+    puts "💡 Troubleshooting: Android build failed."
+    puts "   Possible solutions:"
+    puts "   - Run: cd #{ENV['PROJECT_ROOT']}/android && ./gradlew clean"
+    puts "   - Check: ANDROID_HOME is set correctly"
+    puts "   - Verify: Android SDK and build tools are installed"
+  elsif exception.message.include?("command not found") || exception.message.include?("pnpm")
+    puts ""
+    puts "💡 Troubleshooting: Command not found."
+    puts "   Possible solutions:"
+    puts "   - Ensure pnpm is installed: npm install -g pnpm"
+    puts "   - Check: PATH includes node and pnpm binaries"
+    puts "   - Verify: Running from correct directory"
+  end
+end

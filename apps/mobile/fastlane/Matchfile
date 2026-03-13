@@ -1,0 +1,116 @@
+# Matchfile - Configuration for fastlane match (code signing management)
+#
+# WHAT IS THIS FILE?
+#   This file configures fastlane match, which manages iOS certificates and
+#   provisioning profiles for code signing. Match implements the codesigning.guide
+#   approach: one shared certificate across the team, stored encrypted in git.
+#
+# WHAT IS MATCH?
+#   Match automates iOS code signing by:
+#   - Storing certificates and profiles in an encrypted git repository
+#   - Sharing them securely across your team
+#   - Installing them automatically when needed
+#   - Eliminating "code signing hell" from manual certificate management
+#
+# HOW IT WORKS:
+#   1. First run: Creates certificates/profiles, encrypts them, stores in git repo
+#   2. Team members: Clones repo, decrypts, installs certificates locally
+#   3. CI systems: Uses readonly mode to only fetch existing certificates
+#
+# OFFICIAL DOCUMENTATION:
+#   - Match Guide: https://docs.fastlane.tools/actions/match/
+#   - Code Signing Concepts: https://codesigning.guide/
+#   - Troubleshooting: https://docs.fastlane.tools/codesigning/troubleshooting/
+#
+# CREATED: Phase 46-01 (iOS Certificate & Code Signing Setup)
+
+# =============================================================================
+# Git Repository Configuration
+# =============================================================================
+
+# Git repository URL for storing encrypted certificates and profiles
+# IMPORTANT: This MUST be a PRIVATE repository!
+#
+# Where to create:
+#   1. Go to https://github.com/new (or your git hosting service)
+#   2. Create new repository with name like "yahtzee-certificates" or "pokeresque-certs"
+#   3. Select PRIVATE visibility (critical for security!)
+#   4. Do NOT initialize with README (match will create initial structure)
+#   5. Copy the HTTPS or SSH URL
+#
+# Example (HTTPS): https://github.com/yourname/yahtzee-certificates.git
+# Example (SSH):   git@github.com:yourname/yahtzee-certificates.git
+#
+# Set in .env file:
+#   MATCH_GIT_URL=https://github.com/yourname/yahtzee-certificates.git
+git_url(ENV["MATCH_GIT_URL"])
+
+# =============================================================================
+# Storage Configuration
+# =============================================================================
+
+# Storage backend for certificates and profiles
+# Options: "git" (most common), "google_cloud", "s3", "gitlab_secure_files"
+# Recommendation: Use "git" for team projects, it's free and works well
+storage_mode("git")
+
+# =============================================================================
+# Certificate Type Configuration
+# =============================================================================
+
+# Default type of provisioning profile to generate/fetch
+# This can be overridden in individual match() calls in Fastfile lanes
+#
+# Options:
+#   - "appstore"    : App Store Distribution (for TestFlight and App Store)
+#   - "development" : Development (for testing on devices during development)
+#   - "adhoc"       : Ad Hoc (for distributing to specific devices outside App Store)
+#   - "enterprise"  : Enterprise (for companies with Apple Enterprise program)
+#
+# Where to use each:
+#   - appstore    : Phase 47 (TestFlight beta), Phase 50 (production release)
+#   - development : Local testing on physical devices
+#   - adhoc       : Beta testing outside TestFlight (not recommended for this project)
+#
+# Set to "appstore" as default since most lanes will use App Store provisioning
+type("appstore")
+
+# =============================================================================
+# App Identifier Configuration
+# =============================================================================
+
+# App bundle identifier(s) from capacitor.config.ts
+# Must match exactly with bundle ID configured in Capacitor and Xcode project
+#
+# Where to find:
+#   - capacitor.config.ts: Look for "appId" field
+#   - Xcode: Open ios/App/App.xcodeproj, select App target, General tab → Bundle Identifier
+#
+# Array syntax: Allows managing multiple app extensions in future
+#   Example: ["com.fitlog.app", "com.fitlog.app.widget"]
+#
+# Current app ID: com.fitlog.app
+app_identifier(["com.fitlog.app"])
+
+# =============================================================================
+# Authentication Configuration
+# =============================================================================
+
+# AUTHENTICATION METHOD: We use App Store Connect API Key (not Apple ID + password)
+# This eliminates 2FA prompts and enables non-interactive automation.
+#
+# The API key is configured in Fastfile using app_store_connect_api_key action,
+# not here in Matchfile. See setup_api_key lane in Fastfile.
+#
+# DO NOT UNCOMMENT THIS:
+# username(ENV["APPLE_ID"])  # We don't use Apple ID authentication
+
+# =============================================================================
+# Additional Options
+# =============================================================================
+
+# For all available Matchfile options, run:
+#   bundle exec fastlane action match
+#
+# Or view documentation:
+#   https://docs.fastlane.tools/actions/match/#parameters

@@ -1,0 +1,64 @@
+# Appfile - App identifier and team configuration for fastlane
+#
+# This file centralizes app identifiers and team information used across all lanes.
+# Environment variables are used for sensitive data (never hardcode secrets!).
+#
+# Learn more: https://docs.fastlane.tools/advanced/Appfile/
+# Environment variables: https://docs.fastlane.tools/best-practices/keys/
+
+# =============================================================================
+# iOS Configuration
+# =============================================================================
+
+# App bundle identifier - must match:
+#   - apps/mobile/capacitor.config.ts (appId)
+#   - ios/App/App/Info.plist (CFBundleIdentifier)
+#   - Apple Developer Portal App ID
+app_identifier("com.fitlog.app")
+
+# Apple ID for App Store Connect authentication
+# Where to find: The email you use to log into https://appstoreconnect.apple.com
+# Set in fastlane/.env: APPLE_ID=your-email@example.com
+apple_id(ENV["APPLE_ID"])
+
+# Apple Developer Portal Team ID (10-character alphanumeric)
+# Where to find: https://developer.apple.com/account/#/membership → Team ID
+# Example: A1B2C3D4E5
+# Set in fastlane/.env: FASTLANE_TEAM_ID=YOUR_TEAM_ID
+team_id(ENV["FASTLANE_TEAM_ID"])
+
+# App Store Connect Team ID
+# Only needed if you belong to multiple App Store Connect teams
+# Where to find: App Store Connect → Users and Access → Keys (top of page)
+# Set in fastlane/.env: FASTLANE_ITC_TEAM_ID=123456789
+itc_team_id(ENV["FASTLANE_ITC_TEAM_ID"])
+
+# =============================================================================
+# Android Configuration
+# =============================================================================
+
+# Android uses platform-specific block for configuration
+for_platform :android do
+  # Package name - must match:
+  #   - apps/mobile/capacitor.config.ts (appId)
+  #   - android/app/build.gradle (applicationId)
+  #   - Google Play Console app listing
+  package_name("com.fitlog.app")
+
+  # Google Play service account JSON key for API authentication
+  # Where to create: Google Cloud Console → IAM & Admin → Service Accounts
+  # Guide: https://docs.fastlane.tools/getting-started/android/setup/#collect-your-google-credentials
+  # Set in fastlane/.env: GOOGLE_PLAY_JSON_KEY_PATH=./keys/google-play-service-account.json
+  json_key_file(ENV["GOOGLE_PLAY_JSON_KEY_PATH"])
+end
+
+# =============================================================================
+# Lane-specific overrides (optional)
+# =============================================================================
+# You can override settings for specific lanes:
+#
+# for_lane :beta do
+#   app_identifier("com.fitlog.app.beta")
+# end
+#
+# This is useful for beta/staging app variants with different bundle IDs.

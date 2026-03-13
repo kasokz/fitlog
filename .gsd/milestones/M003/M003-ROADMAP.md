@@ -69,7 +69,7 @@ This milestone is complete only when all are true:
 - [x] **S04: Premium Program Templates** `risk:low` `depends:[S02]`
   > After this: Users can browse 5 premium program templates (periodized strength, linear progression, tiered volume, etc.) in the template selection UI. Premium templates show a lock icon and require purchase to use. After purchasing the template pack, users can create programs from these templates using the existing `createProgramFromTemplate()` flow.
 
-- [ ] **S05: App Store & Play Store Listing Optimization** `risk:medium` `depends:[S03, S04]`
+- [x] **S05: App Store & Play Store Listing Optimization** `risk:medium` `depends:[S03, S04]`
   > After this: App metadata (descriptions, keywords, screenshots, what's-new text) is prepared for both stores in de + en localizations via fastlane configuration. Privacy policy and terms of service URLs are set. Store assets are ready for submission.
 
 - [ ] **S06: End-to-End Integration & Store Submission** `risk:medium` `depends:[S05]`

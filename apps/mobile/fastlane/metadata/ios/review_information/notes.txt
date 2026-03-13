@@ -1,0 +1,19 @@
+This app is a workout tracker for strength training. No login required -- the app works entirely offline and requires no account setup.
+
+Core Features:
+- Log workouts with sets, weight, reps, and RIR (Reps in Reserve)
+- Create custom training programs or choose from 8 built-in templates
+- View workout history and track progression over time
+
+To test: Launch the app and tap the "+" button on the home screen to start a new workout. Select exercises from the library, log your sets, and complete the workout. Navigate to "Programs" in the bottom tab bar to browse program templates.
+
+In-App Purchases:
+This app offers two types of in-app purchases:
+
+1. Premium Subscription (monthly or annual): Unlocks extended analytics including volume trends, full training history, progression curves, and data-driven deload suggestions. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.
+
+2. Template Pack (one-time purchase): Unlocks 5 additional premium program templates (Periodized Strength 531, Linear Progression LP, Tiered Volume Method, Periodized Hypertrophy, Strength-Endurance Block).
+
+To test premium features: Navigate to "Settings" in the bottom tab bar and tap "Restore Purchases" to verify purchase restoration. Premium features are gated behind the subscription or template pack purchase respectively.
+
+The 3 free program templates (Full Body, Upper / Lower, Push / Pull / Legs) and basic workout tracking are fully functional without any purchase.

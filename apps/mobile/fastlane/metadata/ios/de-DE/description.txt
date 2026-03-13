@@ -1,0 +1,33 @@
+FitLog ist dein intelligentes Trainingstagebuch fuer strukturiertes Krafttraining. Tracke jedes Workout mit RIR-basierter Progression (Reps in Reserve) und lass dich von datengestuetzten Vorschlaegen zu neuen Bestleistungen fuehren.
+
+Workout-Tracking mit Tiefe:
+- Erfasse Saetze, Gewicht, Wiederholungen und RIR fuer jede Uebung
+- Automatische Progressionsvorschlaege basierend auf deiner RIR-Historie
+- Timer zwischen Saetzen fuer optimale Pausensteuerung
+- Uebungsbibliothek mit ueber 100 vordefinierten Uebungen
+
+8 Programmvorlagen fuer jeden Trainingsansatz:
+Starte sofort mit einer von drei kostenlosen Vorlagen oder schalte fuenf weitere Premium-Vorlagen frei:
+- Full Body (kostenlos): Ganzkoerper-Programm fuer Einsteiger und Fortgeschrittene
+- Upper / Lower (kostenlos): Klassischer Ober-/Unterkoerper-Split
+- Push / Pull / Legs (kostenlos): Beliebter 3er-Split mit hoher Frequenz
+- Periodized Strength 531 (Premium): 4-Tage-Periodisierung nach dem 5/3/1-Prinzip
+- Linear Progression LP (Premium): 4-Tage Ober-/Unterkoerper mit linearer Steigerung
+- Tiered Volume Method (Premium): 4-Tage T1/T2/T3-Stufensystem
+- Periodized Hypertrophy (Premium): 5-Tage PPL+UL-Hybrid fuer maximales Muskelwachstum
+- Strength-Endurance Block (Premium): 3-Tage Ganzkoerper mit Daily Undulating Periodization
+
+Detaillierte Trainingsanalyse (Premium):
+- Volumen-Trends pro Muskelgruppe ueber Wochen und Monate
+- Vollstaendige Trainingshistorie mit Filteroptionen
+- Progressionskurven fuer jede Uebung
+- Datengestuetzte Vorschlaege fuer Deloads und Intensitaetssteuerung
+
+Durchdachtes Design:
+- Offline-first: Alle Daten bleiben lokal auf deinem Geraet
+- Kein Konto erforderlich: Starte sofort ohne Registrierung
+- Dark Mode und Light Mode
+- Verfuegbar auf Deutsch, Englisch, Spanisch, Franzoesisch und Italienisch
+
+Premium-Optionen:
+FitLog ist kostenlos nutzbar mit 3 Programmvorlagen und grundlegenden Analysen. Fuer erweiterte Analysen steht ein optionales Abonnement zur Verfuegung (monatlich oder jaehrlich). Die 5 Premium-Programmvorlagen sind als einmaliger Kauf erhaeltlich. Abonnements verlaengern sich automatisch, sofern sie nicht mindestens 24 Stunden vor Ablauf der aktuellen Laufzeit gekuendigt werden. Die Verwaltung erfolgt ueber die Kontoeinstellungen im App Store.

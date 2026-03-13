@@ -1,0 +1,33 @@
+FitLog is your intelligent workout journal for structured strength training. Track every workout with RIR-based progression (Reps in Reserve) and let data-driven suggestions guide you to new personal records.
+
+Workout Tracking with Depth:
+- Log sets, weight, reps, and RIR for every exercise
+- Automatic progression suggestions based on your RIR history
+- Rest timer between sets for optimal recovery
+- Exercise library with 100+ predefined exercises
+
+8 Program Templates for Every Training Style:
+Get started instantly with one of three free templates or unlock five additional premium templates:
+- Full Body (Free): Full-body program for beginners and intermediates
+- Upper / Lower (Free): Classic upper/lower body split
+- Push / Pull / Legs (Free): Popular 3-day split with high frequency
+- Periodized Strength 531 (Premium): 4-day periodization based on the 5/3/1 principle
+- Linear Progression LP (Premium): 4-day upper/lower with linear progression
+- Tiered Volume Method (Premium): 4-day T1/T2/T3 tiered system
+- Periodized Hypertrophy (Premium): 5-day PPL+UL hybrid for maximum muscle growth
+- Strength-Endurance Block (Premium): 3-day full body with Daily Undulating Periodization
+
+Detailed Workout Analytics (Premium):
+- Volume trends per muscle group over weeks and months
+- Complete training history with filter options
+- Progression curves for every exercise
+- Data-driven suggestions for deloads and intensity management
+
+Thoughtful Design:
+- Offline-first: All data stays locally on your device
+- No account required: Start instantly without registration
+- Dark mode and light mode
+- Available in German, English, Spanish, French, and Italian
+
+Premium Options:
+FitLog is free to use with 3 program templates and basic analytics. For extended analytics, an optional subscription is available (monthly or annual). The 5 premium program templates are available as a one-time purchase. Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Manage subscriptions in your App Store account settings.

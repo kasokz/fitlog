@@ -1,0 +1,76 @@
+{
+	"device_frame_version": "latest",
+	"default": {
+		"background": "./background.png",
+		"padding": 80,
+		"show_complete_frame": true,
+		"stack_title": true,
+		"title": {
+			"color": "#ffffff",
+			"font_size": 84,
+			"font": "./fonts/Roboto-Bold.ttf",
+			"spacing": 20
+		},
+		"keyword": {
+			"color": "#ffffff",
+			"font_size": 56,
+			"font": "./fonts/Roboto-Medium.ttf"
+		}
+	},
+	"data": [
+		{
+			"filter": "01",
+			"title": {
+				"text": "Workout Tracking"
+			},
+			"keyword": {
+				"text": "Sets, weight, reps and RIR"
+			}
+		},
+		{
+			"filter": "02",
+			"title": {
+				"text": "Exercise Library"
+			},
+			"keyword": {
+				"text": "100+ exercises built-in"
+			}
+		},
+		{
+			"filter": "03",
+			"title": {
+				"text": "Strength Curves"
+			},
+			"keyword": {
+				"text": "Track your progression"
+			}
+		},
+		{
+			"filter": "04",
+			"title": {
+				"text": "Personal Records"
+			},
+			"keyword": {
+				"text": "Never miss a PR"
+			}
+		},
+		{
+			"filter": "05",
+			"title": {
+				"text": "Program Templates"
+			},
+			"keyword": {
+				"text": "8 training programs"
+			}
+		},
+		{
+			"filter": "06",
+			"title": {
+				"text": "Premium Analytics"
+			},
+			"keyword": {
+				"text": "Volume trends and insights"
+			}
+		}
+	]
+}

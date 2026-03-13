@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M003 — Monetization & Premium Features
-**Active Slice:** S05 — App Store & Play Store Listing Optimization
+**Active Slice:** S06 — End-to-End Integration & Store Submission
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S05 (App Store & Play Store Listing Optimization).
+Plan slice S06 (End-to-End Integration & Store Submission).
