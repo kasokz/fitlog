@@ -8,7 +8,7 @@
 **Service:** PostgreSQL (local Docker or hosted)
 **Dashboard:** Local Docker — no dashboard. Hosted: depends on provider (Railway, Neon, etc.)
 **Format hint:** `postgresql://user:password@host:5432/fitlog`
-**Status:** pending
+**Status:** collected
 **Destination:** dotenv
 
 1. Start Postgres via Docker Compose (provided in S01): `docker compose up -d`
@@ -20,7 +20,7 @@
 **Service:** Better Auth (self-generated secret)
 **Dashboard:** N/A — generated locally
 **Format hint:** 32+ character random string (e.g., `openssl rand -base64 32`)
-**Status:** pending
+**Status:** collected
 **Destination:** dotenv
 
 1. Run: `openssl rand -base64 32`
@@ -32,7 +32,7 @@
 **Service:** SvelteKit (application base URL)
 **Dashboard:** N/A — application config
 **Format hint:** `http://localhost:5174` (dev) or `https://api.fitlog.app` (prod)
-**Status:** pending
+**Status:** collected
 **Destination:** dotenv
 
 1. For local development: set to `http://localhost:5174`

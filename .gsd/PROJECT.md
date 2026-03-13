@@ -61,4 +61,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M001: Core Training Engine — Workout logging, exercise library, programs, mesocycles, offline SQLite, onboarding, striking UI, iOS + Android builds, i18n (de/en)
 - [x] M002: Analytics & Progression Intelligence — Strength curves, 1RM estimation, PR tracking, volume trends, RIR-driven progression suggestions, deload automation, freemium gate, i18n (de/en)
 - [x] M003: Monetization & Premium Features — IAP/subscription infra, purchase state management, paywall UX, premium templates, store listing optimization, end-to-end integration + store submission, i18n key sync. All 7 slices complete.
-- [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export
+- [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export. **S01 complete:** SvelteKit API with Better Auth + Drizzle + Postgres, mobile auth service, sign-up/sign-in UI

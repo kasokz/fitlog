@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M004 — Cloud Sync & Platform
-**Active Slice:** S01 — Backend API + Auth + Mobile Sign-In
+**Active Slice:** S02 — Sync Protocol + Two-Way Sync
 **Phase:** planning
 **Requirements Status:** 35 active · 0 validated · 3 deferred · 2 out of scope
 
@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Backend API + Auth + Mobile Sign-In).
+Plan slice S02 (Sync Protocol + Two-Way Sync).

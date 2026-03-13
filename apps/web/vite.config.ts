@@ -15,5 +15,8 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
 		})
-	]
+	],
+	test: {
+		include: ['src/**/*.test.ts'],
+	},
 });

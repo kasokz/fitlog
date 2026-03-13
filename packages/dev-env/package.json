@@ -1,0 +1,12 @@
+{
+	"name": "@repo/dev-env",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"dev": "exec docker-compose up"
+	}
+}

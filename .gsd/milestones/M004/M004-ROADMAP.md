@@ -60,7 +60,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Backend API + Auth + Mobile Sign-In** `risk:high` `depends:[]`
+- [x] **S01: Backend API + Auth + Mobile Sign-In** `risk:high` `depends:[]`
   > After this: A user can sign up and sign in from the mobile app. Bearer token is stored on device. SvelteKit API runs with Better Auth + Drizzle + Postgres. Server has Drizzle schema for all 8 app tables with `user_id` columns. The auth round-trip (mobile → API → JWT → stored token) is proven end-to-end.
 
 - [ ] **S02: Sync Protocol + Two-Way Sync** `risk:high` `depends:[S01]`

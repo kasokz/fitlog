@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
 	import { userPrefersMode, setMode } from 'mode-watcher';
@@ -10,6 +11,9 @@
 	import { toast } from 'svelte-sonner';
 	import { isPremiumUser, setPremiumStatus, getActiveProducts, revalidatePurchases } from '$lib/services/premium.js';
 	import type { PurchasedProduct } from '$lib/services/premium.js';
+	import { getAuthState, signOut as authSignOut } from '$lib/services/auth-client.js';
+	import type { AuthState } from '$lib/services/auth-client.js';
+	import { LogIn, LogOut, UserPlus } from '@lucide/svelte';
 	import {
 		isBillingSupported,
 		getProducts,
@@ -23,6 +27,10 @@
 	import type { Product } from '$lib/services/purchase-plugin.js';
 
 	let premiumActive = $state(false);
+
+	// Auth state
+	let authState: AuthState = $state({ isSignedIn: false, userId: null, email: null, name: null });
+	let signingOut = $state(false);
 
 	// Production subscription section state
 	let activeProducts: PurchasedProduct[] = $state([]);
@@ -55,6 +63,30 @@
 			});
 		}
 	});
+
+	// Load auth state on mount
+	$effect(() => {
+		getAuthState().then((state) => {
+			authState = state;
+		});
+	});
+
+	async function handleSignOut() {
+		signingOut = true;
+		try {
+			const result = await authSignOut();
+			if (result.success) {
+				authState = { isSignedIn: false, userId: null, email: null, name: null };
+				toast.success(m.auth_signout_success());
+			} else {
+				toast.error(result.error ?? m.auth_signout_error());
+			}
+		} catch {
+			toast.error(m.auth_signout_error());
+		} finally {
+			signingOut = false;
+		}
+	}
 
 	async function refreshActiveProducts() {
 		activeProducts = await getActiveProducts();
@@ -229,6 +261,54 @@
 				{m.settings_language_en()}
 			</ToggleGroup.Item>
 		</ToggleGroup.Root>
+	</div>
+
+	<!-- Account / Auth Section -->
+	<div class="space-y-3 mt-6">
+		<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.auth_settings_section()}</h2>
+
+		{#if authState.isSignedIn}
+			<!-- Signed in: show user info + sign out -->
+			<div class="flex items-center justify-between rounded-md border px-4 py-3">
+				<div class="min-w-0">
+					<p class="truncate text-sm font-medium">{authState.email}</p>
+					<p class="text-xs text-muted-foreground">{m.auth_settings_signed_in()}</p>
+				</div>
+			</div>
+			<Button
+				variant="outline"
+				class="w-full justify-center gap-2"
+				disabled={signingOut}
+				onclick={handleSignOut}
+			>
+				{#if signingOut}
+					<LoaderCircle class="size-4 animate-spin" />
+				{:else}
+					<LogOut class="size-4" />
+				{/if}
+				{m.auth_signout_button()}
+			</Button>
+		{:else}
+			<!-- Not signed in: show sign-in / sign-up links -->
+			<div class="flex flex-col gap-2">
+				<Button
+					variant="default"
+					class="w-full justify-center gap-2"
+					onclick={() => goto('/auth/sign-in')}
+				>
+					<LogIn class="size-4" />
+					{m.auth_signin_button()}
+				</Button>
+				<Button
+					variant="outline"
+					class="w-full justify-center gap-2"
+					onclick={() => goto('/auth/sign-up')}
+				>
+					<UserPlus class="size-4" />
+					{m.auth_signup_button()}
+				</Button>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Subscription Section (visible to ALL users) -->

@@ -363,5 +363,39 @@
   "settings_subscription_restore_success": "{count} purchases successfully restored",
   "settings_subscription_restore_error": "Restore failed: {error}",
   "settings_subscription_restore_none": "No purchases found to restore",
-  "settings_subscription_manage": "Manage Subscription"
+  "settings_subscription_manage": "Manage Subscription",
+
+  "auth_email_label": "Email",
+  "auth_email_placeholder": "your@email.com",
+  "auth_password_label": "Password",
+  "auth_password_placeholder": "At least 8 characters",
+  "auth_confirm_password_label": "Confirm Password",
+  "auth_confirm_password_placeholder": "Enter password again",
+
+  "auth_signin_title": "Sign in to your account",
+  "auth_signin_button": "Sign In",
+  "auth_signin_submitting": "Signing in...",
+  "auth_signin_success": "Successfully signed in",
+  "auth_signin_error": "Sign-in failed",
+  "auth_signin_link": "Sign In",
+  "auth_no_account": "Don't have an account?",
+
+  "auth_signup_title": "Create your account",
+  "auth_signup_button": "Sign Up",
+  "auth_signup_submitting": "Signing up...",
+  "auth_signup_success": "Account created successfully",
+  "auth_signup_error": "Sign-up failed",
+  "auth_signup_link": "Sign Up",
+  "auth_has_account": "Already have an account?",
+
+  "auth_signout_button": "Sign Out",
+  "auth_signout_success": "Successfully signed out",
+  "auth_signout_error": "Sign-out failed",
+
+  "auth_settings_section": "Account",
+  "auth_settings_signed_in": "Signed in",
+
+  "auth_validation_email_invalid": "Please enter a valid email address",
+  "auth_validation_password_min": "Password must be at least 8 characters",
+  "auth_validation_passwords_must_match": "Passwords must match"
 }

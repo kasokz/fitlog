@@ -16,7 +16,10 @@
 	let ready = $state(false);
 
 	const showBottomNav = $derived(
-		ready && page.url.pathname !== '/onboarding' && !page.url.pathname.startsWith('/workout/')
+		ready &&
+			page.url.pathname !== '/onboarding' &&
+			!page.url.pathname.startsWith('/workout/') &&
+			!page.url.pathname.startsWith('/auth/')
 	);
 
 	$effect(() => {
