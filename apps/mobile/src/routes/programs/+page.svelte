@@ -3,7 +3,7 @@
 	import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@repo/ui/components/ui/empty';
 	import * as Drawer from '@repo/ui/components/ui/drawer';
 	import { Button } from '@repo/ui/components/ui/button';
-	import { SearchX, Loader2, Plus } from '@lucide/svelte';
+	import { SearchX, Loader2, Plus, BookTemplate } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 
 	import { getDb } from '$lib/db/database.js';
@@ -12,6 +12,7 @@
 
 	import ProgramCard from '$lib/components/programs/ProgramCard.svelte';
 	import ProgramForm from '$lib/components/programs/ProgramForm.svelte';
+	import TemplateBrowserDrawer from '$lib/components/programs/TemplateBrowserDrawer.svelte';
 
 	// ── State ──
 
@@ -20,6 +21,7 @@
 	let error = $state<string | null>(null);
 
 	let createDrawerOpen = $state(false);
+	let templateDrawerOpen = $state(false);
 
 	// ── Data loading ──
 
@@ -98,9 +100,18 @@
 	{/if}
 </section>
 
-<!-- FAB: Create Program -->
+<!-- FABs: Create Program + From Template -->
 {#if !loading && !error}
-	<div class="fixed right-4 bottom-24 z-50">
+	<div class="fixed right-4 bottom-24 z-50 flex flex-col gap-2">
+		<Button
+			size="lg"
+			variant="outline"
+			class="border-2 border-border bg-background shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+			onclick={() => { templateDrawerOpen = true; }}
+		>
+			<BookTemplate class="mr-2 size-5" />
+			{m.programs_template_button()}
+		</Button>
 		<Button
 			size="lg"
 			class="border-2 border-border shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
@@ -122,3 +133,6 @@
 		<ProgramForm oncreated={handleProgramCreated} />
 	</Drawer.Content>
 </Drawer.Root>
+
+<!-- Template Browser Drawer -->
+<TemplateBrowserDrawer bind:open={templateDrawerOpen} oncreated={handleProgramCreated} />

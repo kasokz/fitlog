@@ -27,7 +27,7 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **Progression Suggestions:** Non-intrusive banners during active workouts when RIR criteria met (>=2 sessions, avg RIR >=2), equipment-specific weight rounding
 - **Deload Automation:** Page-level deload banner and pre-fill weight reduction (~60%, rounded to 2.5kg) when mesocycle reaches deload week
 - **Freemium Gate:** Local feature-flag service via @capacitor/preferences. Free: Strength chart + Frequency + 30d range + top 3 PRs. Premium: full charts, extended history, progression suggestions. Ready for M003 IAP wiring.
-- **i18n:** 319 synchronized keys in German (base) and English via Paraglide
+- **i18n:** 365 synchronized keys in German (base) and English via Paraglide
 - **Platform:** iOS and Android native projects scaffolded via Capacitor 8, builds to static output
 
 ## Architecture / Key Patterns
@@ -55,5 +55,5 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 - [x] M001: Core Training Engine — Workout logging, exercise library, programs, mesocycles, offline SQLite, onboarding, striking UI, iOS + Android builds, i18n (de/en)
 - [x] M002: Analytics & Progression Intelligence — Strength curves, 1RM estimation, PR tracking, volume trends, RIR-driven progression suggestions, deload automation, freemium gate, i18n (de/en)
-- [ ] M003: Monetization & Premium Features — IAP/subscription infra, premium templates, advanced analytics pack, paywall UX, store optimization
+- [ ] M003: Monetization & Premium Features — IAP/subscription infra (S01 done), purchase state management (S02 done), paywall UX (S03 done), premium templates (S04 done), store optimization (S05-S07 remaining)
 - [ ] M004: Cloud Sync & Platform — Account system, cross-device sync, conflict resolution, backup/restore, data export

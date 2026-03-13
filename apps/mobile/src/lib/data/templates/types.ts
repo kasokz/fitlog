@@ -51,4 +51,6 @@ export interface ProgramTemplate {
 	days: TemplateDayDefinition[];
 	/** Default mesocycle configuration */
 	mesocycleDefaults: MesocycleDefaults;
+	/** Whether this template requires a premium purchase (defaults to false/undefined for free templates) */
+	premium?: boolean;
 }

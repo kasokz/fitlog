@@ -66,7 +66,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Paywall UX & Upgrade Flows** `risk:medium` `depends:[S02]`
   > After this: Tapping "Premium freischalten" on any UpgradePrompt opens a polished paywall sheet with dynamically loaded store prices, subscription terms, and a purchase button that triggers the real IAP flow. Restore Purchases is accessible from settings. Apple subscription review requirements (terms display, cancellation instructions) are met.
 
-- [ ] **S04: Premium Program Templates** `risk:low` `depends:[S02]`
+- [x] **S04: Premium Program Templates** `risk:low` `depends:[S02]`
   > After this: Users can browse 5 premium program templates (periodized strength, linear progression, tiered volume, etc.) in the template selection UI. Premium templates show a lock icon and require purchase to use. After purchasing the template pack, users can create programs from these templates using the existing `createProgramFromTemplate()` flow.
 
 - [ ] **S05: App Store & Play Store Listing Optimization** `risk:medium` `depends:[S03, S04]`

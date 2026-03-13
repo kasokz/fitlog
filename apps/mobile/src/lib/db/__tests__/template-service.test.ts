@@ -8,7 +8,7 @@ setupMockDatabase();
 const { getDb, dbExecute, _resetForTesting } = await import('../database.js');
 const { ExerciseRepository } = await import('../repositories/exercise.js');
 const { SEED_EXERCISES } = await import('../seed/exercises.js');
-const { PROGRAM_TEMPLATES } = await import('../../data/templates/index.js');
+const { PROGRAM_TEMPLATES, PREMIUM_PROGRAM_TEMPLATES, ALL_TEMPLATES } = await import('../../data/templates/index.js');
 
 // ── Helpers ──
 
@@ -147,6 +147,136 @@ describe('template data integrity', () => {
 	it('each template has a unique id', () => {
 		const ids = PROGRAM_TEMPLATES.map((t) => t.id);
 		expect(new Set(ids).size).toBe(ids.length);
+	});
+});
+
+// ── Premium Template Data Integrity Tests ──
+
+describe('premium template data integrity', () => {
+	it('all premium template exercise names exist in SEED_EXERCISES', () => {
+		const missingNames: string[] = [];
+
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			for (const day of template.days) {
+				for (const exercise of day.exercises) {
+					if (!SEED_EXERCISE_NAMES.has(exercise.name)) {
+						missingNames.push(`${template.id}/${day.name}: "${exercise.name}"`);
+					}
+				}
+			}
+		}
+
+		expect(missingNames, `Exercise names not found in SEED_EXERCISES:\n${missingNames.join('\n')}`).toHaveLength(0);
+	});
+
+	it('Periodized Strength 531 template has 4 days', () => {
+		const t = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-strength-531');
+		expect(t).toBeDefined();
+		expect(t!.days).toHaveLength(4);
+	});
+
+	it('Linear Progression LP template has 4 days', () => {
+		const t = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'linear-progression-lp');
+		expect(t).toBeDefined();
+		expect(t!.days).toHaveLength(4);
+	});
+
+	it('Tiered Volume Method template has 4 days', () => {
+		const t = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'tiered-volume-method');
+		expect(t).toBeDefined();
+		expect(t!.days).toHaveLength(4);
+	});
+
+	it('Periodized Hypertrophy template has 5 days', () => {
+		const t = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-hypertrophy');
+		expect(t).toBeDefined();
+		expect(t!.days).toHaveLength(5);
+	});
+
+	it('Strength-Endurance Block template has 3 days', () => {
+		const t = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'strength-endurance-block');
+		expect(t).toBeDefined();
+		expect(t!.days).toHaveLength(3);
+	});
+
+	it('each premium template day has 3-8 exercises', () => {
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			for (const day of template.days) {
+				expect(
+					day.exercises.length,
+					`${template.id}/${day.name} has ${day.exercises.length} exercises (expected 3-8)`
+				).toBeGreaterThanOrEqual(3);
+				expect(
+					day.exercises.length,
+					`${template.id}/${day.name} has ${day.exercises.length} exercises (expected 3-8)`
+				).toBeLessThanOrEqual(8);
+			}
+		}
+	});
+
+	it('no duplicate exercise names within a single day', () => {
+		const duplicates: string[] = [];
+
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			for (const day of template.days) {
+				const names = day.exercises.map((e) => e.name);
+				const unique = new Set(names);
+				if (unique.size !== names.length) {
+					const dupes = names.filter((n, i) => names.indexOf(n) !== i);
+					duplicates.push(`${template.id}/${day.name}: ${dupes.join(', ')}`);
+				}
+			}
+		}
+
+		expect(duplicates, `Duplicate exercises found:\n${duplicates.join('\n')}`).toHaveLength(0);
+	});
+
+	it('all premium templates have valid mesocycle defaults', () => {
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			expect(template.mesocycleDefaults.weeksCount, `${template.id} weeksCount`).toBeGreaterThan(0);
+			expect(
+				template.mesocycleDefaults.deloadWeekNumber,
+				`${template.id} deloadWeekNumber`
+			).toBeLessThanOrEqual(template.mesocycleDefaults.weeksCount);
+		}
+	});
+
+	it('all premium exercise definitions have valid rep ranges', () => {
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			for (const day of template.days) {
+				for (const exercise of day.exercises) {
+					expect(exercise.targetSets, `${template.id}/${day.name}/${exercise.name} targetSets`).toBeGreaterThan(0);
+					expect(exercise.minReps, `${template.id}/${day.name}/${exercise.name} minReps`).toBeGreaterThan(0);
+					expect(
+						exercise.maxReps,
+						`${template.id}/${day.name}/${exercise.name} maxReps >= minReps`
+					).toBeGreaterThanOrEqual(exercise.minReps);
+				}
+			}
+		}
+	});
+
+	it('PREMIUM_PROGRAM_TEMPLATES contains exactly 5 templates', () => {
+		expect(PREMIUM_PROGRAM_TEMPLATES).toHaveLength(5);
+	});
+
+	it('all premium templates have premium: true', () => {
+		for (const template of PREMIUM_PROGRAM_TEMPLATES) {
+			expect(template.premium, `${template.id} should have premium: true`).toBe(true);
+		}
+	});
+
+	it('PROGRAM_TEMPLATES still contains exactly 3 free templates', () => {
+		expect(PROGRAM_TEMPLATES).toHaveLength(3);
+	});
+
+	it('ALL_TEMPLATES contains exactly 8 templates', () => {
+		expect(ALL_TEMPLATES).toHaveLength(8);
+	});
+
+	it('all templates in ALL_TEMPLATES have unique IDs', () => {
+		const ids = ALL_TEMPLATES.map((t) => t.id);
+		expect(new Set(ids).size, `Duplicate IDs found: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`).toBe(ids.length);
 	});
 });
 
@@ -303,6 +433,69 @@ describe('createProgramFromTemplate', () => {
 		for (const day of result.trainingDays) {
 			for (let i = 0; i < day.assignments.length; i++) {
 				expect(day.assignments[i].sort_order).toBe(i);
+			}
+		}
+	});
+});
+
+// ── createProgramFromTemplate (premium) Tests ──
+
+describe('createProgramFromTemplate (premium)', () => {
+	beforeEach(async () => {
+		_resetForTesting();
+		await getDb();
+		await clearAllPrograms();
+	});
+
+	afterEach(async () => {
+		await teardownMockDatabase();
+	});
+
+	it('creates a program from a premium template with correct name and day count', async () => {
+		const { createProgramFromTemplate } = await import('../services/template-service.js');
+		const template = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-strength-531')!;
+
+		const result = await createProgramFromTemplate(template);
+		expect(result.program.name).toBe(template.name);
+		expect(result.program.description).toBe(template.description);
+		expect(result.trainingDays).toHaveLength(4);
+	});
+
+	it('creates correct exercise assignments for a premium template', async () => {
+		const { createProgramFromTemplate } = await import('../services/template-service.js');
+		const template = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-strength-531')!;
+
+		const result = await createProgramFromTemplate(template);
+
+		// Each day should have the correct number of assignments
+		for (let i = 0; i < result.trainingDays.length; i++) {
+			expect(
+				result.trainingDays[i].assignments.length,
+				`Day ${i} assignment count`
+			).toBe(template.days[i].exercises.length);
+		}
+	});
+
+	it('creates a mesocycle with premium template defaults', async () => {
+		const { createProgramFromTemplate } = await import('../services/template-service.js');
+		const template = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-strength-531')!;
+
+		const result = await createProgramFromTemplate(template);
+		expect(result.mesocycle.weeks_count).toBe(template.mesocycleDefaults.weeksCount);
+		expect(result.mesocycle.deload_week_number).toBe(template.mesocycleDefaults.deloadWeekNumber);
+	});
+
+	it('resolves all premium template exercise names to valid IDs', async () => {
+		const { createProgramFromTemplate } = await import('../services/template-service.js');
+		const template = PREMIUM_PROGRAM_TEMPLATES.find((t) => t.id === 'periodized-strength-531')!;
+
+		const result = await createProgramFromTemplate(template);
+
+		for (const day of result.trainingDays) {
+			for (const assignment of day.assignments) {
+				expect(assignment.exercise_id).toBeTruthy();
+				const exercise = await ExerciseRepository.getById(assignment.exercise_id);
+				expect(exercise, `Exercise ${assignment.exercise_id} should exist`).not.toBeNull();
 			}
 		}
 	});
