@@ -1,6 +1,6 @@
 {
-	"app_title": "Meine App",
-	"app_description": "Eine moderne mobile Anwendung",
+	"app_title": "FitLog",
+	"app_description": "Dein Trainingslogbuch",
 	"exercises_title": "Übungen",
 	"exercises_search_placeholder": "Übung suchen...",
 	"exercises_filter_muscle_group": "Muskelgruppe",
@@ -46,7 +46,7 @@
 	"muscle_group_forearms": "Unterarme",
 	"muscle_group_quadriceps": "Quadrizeps",
 	"muscle_group_hamstrings": "Beinbeuger",
-	"muscle_group_glutes": "Gesäss",
+	"muscle_group_glutes": "Gesäß",
 	"muscle_group_calves": "Waden",
 	"muscle_group_abs": "Bauch",
 	"muscle_group_full_body": "Ganzkörper",
@@ -58,7 +58,7 @@
 	"equipment_kettlebell": "Kettlebell",
 	"equipment_band": "Widerstandsband",
 	"equipment_other": "Sonstiges",
-	"common_close": "Schliessen",
+	"common_close": "Schließen",
 	"programs_title": "Programme",
 	"programs_count": "{count} Programme",
 	"programs_loading": "Programme werden geladen...",
@@ -234,5 +234,11 @@
 	"settings_theme_system": "System",
 	"settings_theme_light": "Hell",
 	"settings_theme_dark": "Dunkel",
-	"nav_settings": "Einstellungen"
+	"nav_settings": "Einstellungen",
+	"aria_drag_to_reorder": "Zum Sortieren ziehen",
+	"validation_max_reps_gte_min": "Max Wdh. muss ≥ Min Wdh. sein",
+	"validation_deload_within_weeks": "Deload-Woche muss innerhalb der Wochenanzahl liegen",
+	"settings_language_label": "Sprache",
+	"settings_language_de": "Deutsch",
+	"settings_language_en": "Englisch"
 }

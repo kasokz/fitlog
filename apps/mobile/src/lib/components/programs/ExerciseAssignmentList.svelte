@@ -77,7 +77,7 @@
 					<button
 						class="text-muted-foreground touch-none flex items-center justify-center p-1"
 						{@attach sortable.attachHandle}
-						aria-label="Drag to reorder"
+						aria-label={m.aria_drag_to_reorder()}
 					>
 						<GripVertical class="size-4" />
 					</button>

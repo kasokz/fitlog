@@ -73,7 +73,7 @@ This milestone is complete only when all are true:
 - [x] **S06: Design Polish & Platform Builds** `risk:medium` `depends:[S01,S02,S03,S04,S05]`
   > After this: All screens have polished neobrutalist design, haptic feedback on key actions, dark/light mode fully wired. iOS and Android native projects are scaffolded and the app runs on both platforms.
 
-- [ ] **S07: i18n & Launch Readiness** `risk:low` `depends:[S06]`
+- [x] **S07: i18n & Launch Readiness** `risk:low` `depends:[S06]`
   > After this: All user-facing text is localized in German (base) and English. App is fully functional and localized on both platforms.
 
 ## Boundary Map

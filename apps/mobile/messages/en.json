@@ -1,6 +1,6 @@
 {
-	"app_title": "My App",
-	"app_description": "A modern mobile application",
+	"app_title": "FitLog",
+	"app_description": "Your training logbook",
 	"exercises_title": "Exercises",
 	"exercises_search_placeholder": "Search exercises...",
 	"exercises_filter_muscle_group": "Muscle Group",
@@ -229,5 +229,16 @@
 	"onboarding_error": "Failed to create program",
 	"onboarding_skip": "Skip",
 	"onboarding_skip_description": "You can always create a program later.",
-	"nav_settings": "Settings"
+	"nav_settings": "Settings",
+	"settings_title": "Settings",
+	"settings_theme_label": "Theme",
+	"settings_theme_light": "Light",
+	"settings_theme_dark": "Dark",
+	"settings_theme_system": "System",
+	"aria_drag_to_reorder": "Drag to reorder",
+	"validation_max_reps_gte_min": "Max reps must be ≥ min reps",
+	"validation_deload_within_weeks": "Deload week must be within weeks count",
+	"settings_language_label": "Language",
+	"settings_language_de": "German",
+	"settings_language_en": "English"
 }

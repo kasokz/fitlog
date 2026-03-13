@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
 	import { userPrefersMode, setMode } from 'mode-watcher';
 	import * as ToggleGroup from '@repo/ui/components/ui/toggle-group';
-	import { Sun, Moon, Monitor } from '@lucide/svelte';
+	import { Sun, Moon, Monitor, Globe } from '@lucide/svelte';
 
 	function handleModeChange(value: string | undefined) {
 		if (value === 'system' || value === 'light' || value === 'dark') {
 			setMode(value);
+		}
+	}
+
+	function handleLocaleChange(value: string | undefined) {
+		if (value === 'de' || value === 'en') {
+			setLocale(value);
 		}
 	}
 </script>
@@ -38,6 +45,27 @@
 			<ToggleGroup.Item value="dark" class="flex-1 gap-2">
 				<Moon class="size-4" />
 				{m.settings_theme_dark()}
+			</ToggleGroup.Item>
+		</ToggleGroup.Root>
+	</div>
+
+	<!-- Language Section -->
+	<div class="space-y-3 mt-6">
+		<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.settings_language_label()}</h2>
+		<ToggleGroup.Root
+			type="single"
+			value={getLocale()}
+			onValueChange={handleLocaleChange}
+			variant="outline"
+			class="w-full"
+		>
+			<ToggleGroup.Item value="de" class="flex-1 gap-2">
+				<Globe class="size-4" />
+				{m.settings_language_de()}
+			</ToggleGroup.Item>
+			<ToggleGroup.Item value="en" class="flex-1 gap-2">
+				<Globe class="size-4" />
+				{m.settings_language_en()}
 			</ToggleGroup.Item>
 		</ToggleGroup.Root>
 	</div>

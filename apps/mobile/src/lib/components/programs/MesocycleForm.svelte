@@ -31,7 +31,7 @@
 			start_date: z.optional(z.nullable(z.string()))
 		})
 		.refine((data) => data.deload_week_number <= data.weeks_count, {
-			message: 'Deload week must be within weeks count',
+			message: m.validation_deload_within_weeks(),
 			path: ['deload_week_number']
 		});
 

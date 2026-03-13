@@ -35,7 +35,7 @@
 			max_reps: z.number().int().min(1).max(100).default(12)
 		})
 		.refine((data) => data.max_reps >= data.min_reps, {
-			message: 'Max reps must be >= min reps',
+			message: m.validation_max_reps_gte_min(),
 			path: ['max_reps']
 		});
 
