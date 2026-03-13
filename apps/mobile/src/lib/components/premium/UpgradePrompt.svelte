@@ -7,9 +7,11 @@
 	interface Props {
 		/** Feature context key used to select the appropriate description message */
 		feature: 'full_charts' | 'extended_history' | 'premium_templates';
+		/** Called when the user taps the upgrade button (e.g. to open PaywallDrawer) */
+		onupgrade?: () => void;
 	}
 
-	const { feature }: Props = $props();
+	const { feature, onupgrade }: Props = $props();
 
 	const description = $derived.by(() => {
 		switch (feature) {
@@ -23,7 +25,8 @@
 	});
 
 	function handleUpgrade() {
-		console.log(`[Premium] Upgrade tapped — feature: ${feature} (coming soon)`);
+		console.log(`[Premium] Upgrade tapped — feature: ${feature}`);
+		onupgrade?.();
 	}
 </script>
 

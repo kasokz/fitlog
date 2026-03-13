@@ -27,6 +27,7 @@
 	import BodyWeightChart from '$lib/components/analytics/BodyWeightChart.svelte';
 	import FrequencySummary from '$lib/components/analytics/FrequencySummary.svelte';
 	import UpgradePrompt from '$lib/components/premium/UpgradePrompt.svelte';
+	import PaywallDrawer from '$lib/components/premium/PaywallDrawer.svelte';
 
 	// ── State ──
 
@@ -39,6 +40,7 @@
 	let loading = $state(true);
 	let dataLoading = $state(false);
 	let error = $state<string | null>(null);
+	let paywallOpen = $state(false);
 
 	// Chart data
 	let strengthData: StrengthChartPoint[] = $state([]);
@@ -144,6 +146,13 @@
 		}
 	}
 
+	// ── Post-purchase ──
+
+	async function handlePurchaseComplete() {
+		console.log('[Dashboard] Purchase complete — re-checking premium status');
+		premium = await isPremiumUser();
+	}
+
 	// ── Derived ──
 
 	const selectedExerciseName = $derived(
@@ -244,9 +253,11 @@
 
 			{#if !premium}
 				<div class="mt-4">
-					<UpgradePrompt feature="full_charts" />
+					<UpgradePrompt feature="full_charts" onupgrade={() => paywallOpen = true} />
 				</div>
 			{/if}
 		{/if}
 	{/if}
 </section>
+
+<PaywallDrawer bind:open={paywallOpen} onpurchasecomplete={handlePurchaseComplete} />

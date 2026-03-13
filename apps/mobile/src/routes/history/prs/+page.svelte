@@ -14,6 +14,7 @@
 	import { isPremiumUser } from '$lib/services/premium.js';
 	import PRHistoryCard from '$lib/components/history/PRHistoryCard.svelte';
 	import UpgradePrompt from '$lib/components/premium/UpgradePrompt.svelte';
+	import PaywallDrawer from '$lib/components/premium/PaywallDrawer.svelte';
 
 	// ── Types ──
 
@@ -32,6 +33,7 @@
 	let allGroups: ExercisePRGroup[] = $state([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let paywallOpen = $state(false);
 
 	// ── Derived ──
 
@@ -81,6 +83,13 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	// ── Post-purchase ──
+
+	async function handlePurchaseComplete() {
+		console.log('[PRHistory] Purchase complete — re-checking premium status');
+		premium = await isPremiumUser();
 	}
 
 	// ── Init ──
@@ -141,8 +150,10 @@
 
 		{#if hasMoreGroups}
 			<div class="mt-4">
-				<UpgradePrompt feature="extended_history" />
+				<UpgradePrompt feature="extended_history" onupgrade={() => paywallOpen = true} />
 			</div>
 		{/if}
 	{/if}
 </section>
+
+<PaywallDrawer bind:open={paywallOpen} onpurchasecomplete={handlePurchaseComplete} />

@@ -5,13 +5,16 @@
 	import * as ToggleGroup from '@repo/ui/components/ui/toggle-group';
 	import { Switch } from '@repo/ui/components/ui/switch';
 	import { Button } from '@repo/ui/components/ui/button';
-	import { Sun, Moon, Monitor, Globe } from '@lucide/svelte';
-	import { isPremiumUser, setPremiumStatus } from '$lib/services/premium.js';
+	import { Sun, Moon, Monitor, Globe, RotateCcw, ExternalLink, LoaderCircle } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
+	import { isPremiumUser, setPremiumStatus, getActiveProducts, revalidatePurchases } from '$lib/services/premium.js';
+	import type { PurchasedProduct } from '$lib/services/premium.js';
 	import {
 		isBillingSupported,
 		getProducts,
 		purchaseProduct,
 		restorePurchases,
+		manageSubscriptions,
 		PRODUCT_IDS,
 		PLAN_IDS,
 		PURCHASE_TYPE,
@@ -19,6 +22,13 @@
 	import type { Product } from '$lib/services/purchase-plugin.js';
 
 	let premiumActive = $state(false);
+
+	// Production subscription section state
+	let activeProducts: PurchasedProduct[] = $state([]);
+	let restoring = $state(false);
+	let hasActiveSubscription = $derived(
+		activeProducts.some((p) => p.productType === 'subs')
+	);
 
 	// IAP test state (dev only, but declared unconditionally for simplicity)
 	let billingSupported: boolean | null = $state(null);
@@ -32,6 +42,11 @@
 		});
 	});
 
+	// Load active products on mount for the subscription section
+	$effect(() => {
+		refreshActiveProducts();
+	});
+
 	$effect(() => {
 		if (import.meta.env.DEV) {
 			isBillingSupported().then((supported) => {
@@ -39,6 +54,35 @@
 			});
 		}
 	});
+
+	async function refreshActiveProducts() {
+		activeProducts = await getActiveProducts();
+	}
+
+	async function handleProductionRestore() {
+		restoring = true;
+		try {
+			const restored = await restorePurchases();
+			await revalidatePurchases();
+			await refreshActiveProducts();
+			// Re-check premium status after restore
+			premiumActive = await isPremiumUser();
+
+			if (restored.length > 0) {
+				toast.success(m.settings_subscription_restore_success({ count: restored.length }));
+			} else {
+				toast.info(m.settings_subscription_restore_none());
+			}
+		} catch (error) {
+			toast.error(m.settings_subscription_restore_error({ error: String(error) }));
+		} finally {
+			restoring = false;
+		}
+	}
+
+	async function handleManageSubscription() {
+		await manageSubscriptions();
+	}
 
 	async function handlePremiumToggle(checked: boolean) {
 		premiumActive = checked;
@@ -184,6 +228,50 @@
 				{m.settings_language_en()}
 			</ToggleGroup.Item>
 		</ToggleGroup.Root>
+	</div>
+
+	<!-- Subscription Section (visible to ALL users) -->
+	<div class="space-y-3 mt-6">
+		<h2 class="text-sm font-bold uppercase tracking-wide text-muted-foreground">{m.settings_subscription_label()}</h2>
+
+		<!-- Current plan display -->
+		<div class="flex items-center justify-between rounded-md border px-4 py-3">
+			<span class="text-sm font-medium">{m.settings_subscription_current_plan()}</span>
+			<span class="text-sm text-muted-foreground">
+				{#if activeProducts.length > 0}
+					{activeProducts.map((p) => p.productId.split('.').pop()).join(', ')}
+				{:else}
+					{m.settings_subscription_free()}
+				{/if}
+			</span>
+		</div>
+
+		<!-- Restore Purchases button -->
+		<Button
+			variant="outline"
+			class="w-full justify-center gap-2"
+			disabled={restoring}
+			onclick={handleProductionRestore}
+		>
+			{#if restoring}
+				<LoaderCircle class="size-4 animate-spin" />
+			{:else}
+				<RotateCcw class="size-4" />
+			{/if}
+			{m.settings_subscription_restore()}
+		</Button>
+
+		<!-- Manage Subscription button (only when subscribed) -->
+		{#if hasActiveSubscription}
+			<Button
+				variant="outline"
+				class="w-full justify-center gap-2"
+				onclick={handleManageSubscription}
+			>
+				<ExternalLink class="size-4" />
+				{m.settings_subscription_manage()}
+			</Button>
+		{/if}
 	</div>
 
 	<!-- Premium Dev Toggle (dev mode only) -->

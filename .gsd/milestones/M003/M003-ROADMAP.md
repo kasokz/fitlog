@@ -63,7 +63,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Purchase State Management & Premium Gate Wiring** `risk:medium` `depends:[S01]`
   > After this: Completing a sandbox purchase unlocks premium features (analytics tabs, progression suggestions, full PR history). The premium service tracks granular product purchases (subscription vs template packs) instead of a single boolean. Purchase state persists across app restart and is revalidated on launch.
 
-- [ ] **S03: Paywall UX & Upgrade Flows** `risk:medium` `depends:[S02]`
+- [x] **S03: Paywall UX & Upgrade Flows** `risk:medium` `depends:[S02]`
   > After this: Tapping "Premium freischalten" on any UpgradePrompt opens a polished paywall sheet with dynamically loaded store prices, subscription terms, and a purchase button that triggers the real IAP flow. Restore Purchases is accessible from settings. Apple subscription review requirements (terms display, cancellation instructions) are met.
 
 - [ ] **S04: Premium Program Templates** `risk:low` `depends:[S02]`
