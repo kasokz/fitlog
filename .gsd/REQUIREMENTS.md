@@ -499,6 +499,17 @@ This file is the explicit capability and coverage contract for FitLog.
 - Validation: unmapped
 - Notes: Documented in M005-CONTEXT.md.
 
+### R051 — No-Reload Language Switching
+- Class: quality-attribute
+- Status: active
+- Description: Changing the app language in settings updates all visible UI text instantly without triggering a page reload or navigation flash.
+- Why it matters: Page reloads feel jarring in a native mobile app — instant language switching matches native app expectations and avoids losing in-progress state.
+- Source: user
+- Primary owning slice: M006/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Pattern proven in yahtzee reference project using paraglide's overwriteGetLocale/overwriteSetLocale with reactive Svelte 5 state and {#key locale} re-render.
+
 ## Deferred
 
 ### R036 — Social Features / Sharing
@@ -607,6 +618,7 @@ This file is the explicit capability and coverage contract for FitLog.
 | R048 | core-capability | active | M005/S01 | none | unmapped |
 | R049 | launchability | active | M005/S01 | M005/S02, M005/S03 | unmapped |
 | R050 | launchability | active | M005 | none | unmapped |
+| R051 | quality-attribute | active | M006/S01 | none | unmapped |
 | R036 | core-capability | deferred | none | none | unmapped |
 | R037 | core-capability | deferred | none | none | unmapped |
 | R038 | differentiator | deferred | none | none | unmapped |
@@ -615,8 +627,8 @@ This file is the explicit capability and coverage contract for FitLog.
 
 ## Coverage Summary
 
-- Active requirements: 45
-- Mapped to slices: 27 (M001: 17, M005: 10)
+- Active requirements: 46
+- Mapped to slices: 28 (M001: 17, M005: 10, M006: 1)
 - Provisionally mapped: 12 (M002-M004)
 - Validated: 0
 - Unmapped active requirements: 0
