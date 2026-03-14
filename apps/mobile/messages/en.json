@@ -413,5 +413,20 @@
   "workout_start_error": "Failed to start workout",
   "workout_stepper_decrease": "Decrease",
   "workout_stepper_increase": "Increase",
-  "workout_weight": "Weight"
+  "workout_weight": "Weight",
+  "connected_accounts_section": "Connected Accounts",
+  "connected_accounts_provider_email": "Email",
+  "connected_accounts_provider_google": "Google",
+  "connected_accounts_provider_apple": "Apple",
+  "connected_accounts_status_connected": "Connected",
+  "connected_accounts_status_not_connected": "Not connected",
+  "connected_accounts_connect": "Connect",
+  "connected_accounts_disconnect": "Disconnect",
+  "connected_accounts_disconnect_confirm": "Do you really want to disconnect {provider}?",
+  "connected_accounts_disconnect_success": "{provider} has been disconnected",
+  "connected_accounts_connect_success": "{provider} has been connected",
+  "connected_accounts_connect_error": "Failed to connect {provider}",
+  "connected_accounts_disconnect_error": "Failed to disconnect {provider}",
+  "connected_accounts_last_account_warning": "Cannot disconnect your only login method",
+  "connected_accounts_loading": "Loading accounts..."
 }

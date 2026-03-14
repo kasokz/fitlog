@@ -15,6 +15,7 @@
 	import type { AuthState } from '$lib/services/auth-client.js';
 	import { clearSyncState } from '$lib/services/sync.js';
 	import SyncStatusSection from '$lib/components/settings/SyncStatusSection.svelte';
+	import ConnectedAccountsSection from '$lib/components/settings/ConnectedAccountsSection.svelte';
 	import { LogIn, LogOut, UserPlus } from '@lucide/svelte';
 	import { generateWorkoutCSV, generateBodyWeightCSV, generateFullJSON } from '$lib/services/export.js';
 	import { shareExportFile, shareMultipleExportFiles } from '$lib/services/export-file.js';
@@ -402,8 +403,9 @@
 		{/if}
 	</div>
 
-	<!-- Sync Status Section (only when signed in) -->
+	<!-- Connected Accounts + Sync Status (only when signed in) -->
 	{#if authState.isSignedIn}
+		<ConnectedAccountsSection />
 		<SyncStatusSection />
 	{/if}
 

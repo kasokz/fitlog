@@ -38,6 +38,18 @@ export interface AuthResult {
 	error?: string;
 }
 
+export interface LinkedAccount {
+	id: string;
+	providerId: string;
+	accountId: string;
+}
+
+export interface LinkedAccountsResult {
+	success: boolean;
+	accounts: LinkedAccount[];
+	error?: string;
+}
+
 export interface AuthState {
 	isSignedIn: boolean;
 	userId: string | null;
@@ -391,5 +403,154 @@ export async function isSignedIn(): Promise<boolean> {
 	} catch (error) {
 		console.error('[Auth] isSignedIn: failed to read', error);
 		return false;
+	}
+}
+
+/**
+ * Get the list of linked accounts for the current user.
+ *
+ * Calls Better Auth's `/api/auth/list-accounts` endpoint with Bearer auth.
+ * Returns an empty accounts array when not signed in (no token stored).
+ *
+ * @returns `{success: true, accounts: [...]}` on success, `{success: false, accounts: [], error: string}` on failure.
+ */
+export async function getLinkedAccounts(): Promise<LinkedAccountsResult> {
+	try {
+		console.log('[Auth] getLinkedAccounts: attempting');
+
+		const token = await getStoredToken();
+		if (!token) {
+			console.log('[Auth] getLinkedAccounts: no token stored, returning empty');
+			return { success: true, accounts: [] };
+		}
+
+		const response = await fetch(`${API_BASE_URL}/api/auth/list-accounts`, {
+			method: 'GET',
+			headers: { Authorization: `Bearer ${token}` },
+		});
+
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({}));
+			const message = parseErrorMessage(errorBody);
+			console.error(`[Auth] getLinkedAccounts: failed (${response.status}) — ${message}`);
+			return { success: false, accounts: [], error: message };
+		}
+
+		const body = await response.json();
+		const accounts: LinkedAccount[] = Array.isArray(body) ? body : [];
+		console.log(`[Auth] getLinkedAccounts: success, ${accounts.length} account(s)`);
+		return { success: true, accounts };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Failed to load accounts';
+		console.error('[Auth] getLinkedAccounts: unexpected error', error);
+		return { success: false, accounts: [], error: message };
+	}
+}
+
+/**
+ * Link a social provider to the current user's account.
+ *
+ * Calls Better Auth's `/api/auth/link-social` endpoint with Bearer auth
+ * and the idToken obtained from the native social login plugin.
+ *
+ * @param provider - Social provider name ('google' or 'apple')
+ * @param idToken - The idToken from the native sign-in
+ * @param accessToken - Optional access token from the native sign-in
+ * @param nonce - Optional nonce (required for Apple Sign-In)
+ * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
+ */
+export async function linkSocialAccount(
+	provider: string,
+	idToken: string,
+	accessToken?: string,
+	nonce?: string,
+): Promise<AuthResult> {
+	try {
+		console.log(`[Auth] linkSocialAccount: attempting with ${provider}`);
+
+		const token = await getStoredToken();
+		if (!token) {
+			console.error('[Auth] linkSocialAccount: no token stored');
+			return { success: false, error: 'Not signed in' };
+		}
+
+		const response = await fetch(`${API_BASE_URL}/api/auth/link-social`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				provider,
+				idToken: { token: idToken, accessToken, nonce },
+			}),
+		});
+
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({}));
+			const message = parseErrorMessage(errorBody);
+			console.error(`[Auth] linkSocialAccount: failed (${response.status}) — ${message}`);
+			return { success: false, error: message };
+		}
+
+		console.log(`[Auth] linkSocialAccount: success for ${provider}`);
+		return { success: true };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Failed to link account';
+		console.error('[Auth] linkSocialAccount: unexpected error', error);
+		return { success: false, error: message };
+	}
+}
+
+/**
+ * Unlink a provider from the current user's account.
+ *
+ * Calls Better Auth's `/api/auth/unlink-account` endpoint with Bearer auth.
+ * Returns a user-friendly error if the user tries to unlink their last account.
+ *
+ * @param providerId - The provider to unlink ('credential', 'google', 'apple')
+ * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
+ */
+export async function unlinkAccount(providerId: string): Promise<AuthResult> {
+	try {
+		console.log(`[Auth] unlinkAccount: attempting for ${providerId}`);
+
+		const token = await getStoredToken();
+		if (!token) {
+			console.error('[Auth] unlinkAccount: no token stored');
+			return { success: false, error: 'Not signed in' };
+		}
+
+		const response = await fetch(`${API_BASE_URL}/api/auth/unlink-account`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ providerId }),
+		});
+
+		if (!response.ok) {
+			const errorBody = await response.json().catch(() => ({}));
+			const rawMessage = parseErrorMessage(errorBody);
+
+			// Surface user-friendly message for last-account error
+			const message =
+				rawMessage === 'FAILED_TO_UNLINK_LAST_ACCOUNT' ||
+				(typeof (errorBody as Record<string, unknown>).code === 'string' &&
+					(errorBody as Record<string, unknown>).code === 'FAILED_TO_UNLINK_LAST_ACCOUNT')
+					? 'Cannot disconnect your only login method'
+					: rawMessage;
+
+			console.error(`[Auth] unlinkAccount: failed (${response.status}) — ${message}`);
+			return { success: false, error: message };
+		}
+
+		console.log(`[Auth] unlinkAccount: success for ${providerId}`);
+		return { success: true };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Failed to unlink account';
+		console.error('[Auth] unlinkAccount: unexpected error', error);
+		return { success: false, error: message };
 	}
 }

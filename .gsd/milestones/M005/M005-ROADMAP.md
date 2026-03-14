@@ -60,7 +60,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Apple Sign-In + Auth UI Finalization** `risk:medium` `depends:[S01]`
   > After this: iOS users see both Google and Apple buttons. Android users see Google only. Apple Sign-In works end-to-end with nonce. Social buttons appear above email form with divider on both sign-in and sign-up pages. Post-login sync triggers. All i18n keys in de and en.
 
-- [ ] **S03: Connected Accounts in Settings** `risk:low` `depends:[S01]`
+- [x] **S03: Connected Accounts in Settings** `risk:low` `depends:[S01]`
   > After this: Settings page shows Connected Accounts section listing linked providers (Email, Google, Apple) with connect/disconnect actions. User can disconnect Google and still sign in with email. User can connect Google to an email-only account from Settings.
 
 ## Boundary Map

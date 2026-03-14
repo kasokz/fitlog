@@ -33,6 +33,9 @@ const {
 	getAuthState,
 	isSignedIn,
 	signInWithSocial,
+	getLinkedAccounts,
+	linkSocialAccount,
+	unlinkAccount,
 } = await import('../auth-client.js');
 
 // ── Test Helpers ──
@@ -616,6 +619,240 @@ describe('signInWithSocial', () => {
 		mockFetch.mockRejectedValueOnce(42);
 
 		const result = await signInWithSocial('google', 'any');
+
+		expect(result.success).toBe(false);
+		expect(result.error).toBeDefined();
+	});
+});
+
+// ── getLinkedAccounts ──
+
+describe('getLinkedAccounts', () => {
+	it('returns accounts list on success', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		const accounts = [
+			{ id: 'acc-1', providerId: 'credential', accountId: 'user@test.com' },
+			{ id: 'acc-2', providerId: 'google', accountId: 'google-123' },
+		];
+		mockFetch.mockResolvedValueOnce(mockSuccessResponse(accounts));
+
+		const result = await getLinkedAccounts();
+
+		expect(result).toEqual({ success: true, accounts });
+	});
+
+	it('sends GET with Authorization Bearer header', async () => {
+		mockStorage.set('auth_token', 'bearer-token-xyz');
+		mockFetch.mockResolvedValueOnce(mockSuccessResponse([]));
+
+		await getLinkedAccounts();
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('/api/auth/list-accounts'),
+			expect.objectContaining({
+				method: 'GET',
+				headers: { Authorization: 'Bearer bearer-token-xyz' },
+			}),
+		);
+	});
+
+	it('returns empty array when no token stored', async () => {
+		const result = await getLinkedAccounts();
+
+		expect(result).toEqual({ success: true, accounts: [] });
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
+
+	it('returns empty accounts array on success with empty response', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(mockSuccessResponse([]));
+
+		const result = await getLinkedAccounts();
+
+		expect(result).toEqual({ success: true, accounts: [] });
+	});
+
+	it('returns error on HTTP failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockErrorResponse(401, { message: 'Unauthorized' }),
+		);
+
+		const result = await getLinkedAccounts();
+
+		expect(result).toEqual({ success: false, accounts: [], error: 'Unauthorized' });
+	});
+
+	it('returns error on network failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+		const result = await getLinkedAccounts();
+
+		expect(result).toEqual({ success: false, accounts: [], error: 'Network error' });
+	});
+
+	it('never throws', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce('non-error throw');
+
+		const result = await getLinkedAccounts();
+
+		expect(result.success).toBe(false);
+		expect(result.error).toBeDefined();
+	});
+});
+
+// ── linkSocialAccount ──
+
+describe('linkSocialAccount', () => {
+	it('returns success on successful link', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ status: true }),
+		);
+
+		const result = await linkSocialAccount('google', 'id-token-abc', 'access-token-xyz', 'nonce-123');
+
+		expect(result).toEqual({ success: true });
+	});
+
+	it('sends correct request body shape with idToken object', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(mockSuccessResponse({ status: true }));
+
+		await linkSocialAccount('google', 'my-id-token', 'my-access-token', 'my-nonce');
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('/api/auth/link-social'),
+			expect.objectContaining({
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: 'Bearer test-token',
+				},
+				body: JSON.stringify({
+					provider: 'google',
+					idToken: { token: 'my-id-token', accessToken: 'my-access-token', nonce: 'my-nonce' },
+				}),
+			}),
+		);
+	});
+
+	it('returns error when not signed in', async () => {
+		const result = await linkSocialAccount('google', 'id-token');
+
+		expect(result).toEqual({ success: false, error: 'Not signed in' });
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
+
+	it('returns error on HTTP failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockErrorResponse(400, { message: 'Email mismatch' }),
+		);
+
+		const result = await linkSocialAccount('google', 'bad-token');
+
+		expect(result).toEqual({ success: false, error: 'Email mismatch' });
+	});
+
+	it('returns error on network failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
+
+		const result = await linkSocialAccount('google', 'any-token');
+
+		expect(result).toEqual({ success: false, error: 'Connection refused' });
+	});
+
+	it('never throws', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce(42);
+
+		const result = await linkSocialAccount('google', 'any');
+
+		expect(result.success).toBe(false);
+		expect(result.error).toBeDefined();
+	});
+});
+
+// ── unlinkAccount ──
+
+describe('unlinkAccount', () => {
+	it('returns success on successful unlink', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockSuccessResponse({ status: true }),
+		);
+
+		const result = await unlinkAccount('google');
+
+		expect(result).toEqual({ success: true });
+	});
+
+	it('sends providerId in request body', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(mockSuccessResponse({ status: true }));
+
+		await unlinkAccount('apple');
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.stringContaining('/api/auth/unlink-account'),
+			expect.objectContaining({
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: 'Bearer test-token',
+				},
+				body: JSON.stringify({ providerId: 'apple' }),
+			}),
+		);
+	});
+
+	it('surfaces user-friendly message for last account error', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockErrorResponse(400, { message: 'FAILED_TO_UNLINK_LAST_ACCOUNT', code: 'FAILED_TO_UNLINK_LAST_ACCOUNT' }),
+		);
+
+		const result = await unlinkAccount('credential');
+
+		expect(result).toEqual({ success: false, error: 'Cannot disconnect your only login method' });
+	});
+
+	it('returns error when not signed in', async () => {
+		const result = await unlinkAccount('google');
+
+		expect(result).toEqual({ success: false, error: 'Not signed in' });
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
+
+	it('returns error on HTTP failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockResolvedValueOnce(
+			mockErrorResponse(403, { message: 'SESSION_NOT_FRESH' }),
+		);
+
+		const result = await unlinkAccount('google');
+
+		expect(result).toEqual({ success: false, error: 'SESSION_NOT_FRESH' });
+	});
+
+	it('returns error on network failure', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce(new Error('Timeout'));
+
+		const result = await unlinkAccount('google');
+
+		expect(result).toEqual({ success: false, error: 'Timeout' });
+	});
+
+	it('never throws', async () => {
+		mockStorage.set('auth_token', 'test-token');
+		mockFetch.mockRejectedValueOnce('non-error throw');
+
+		const result = await unlinkAccount('google');
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();

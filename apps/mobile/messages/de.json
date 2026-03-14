@@ -413,5 +413,20 @@
   "workout_start_error": "Fehler beim Starten des Trainings",
   "workout_stepper_decrease": "Verringern",
   "workout_stepper_increase": "Erhöhen",
-  "workout_weight": "Gewicht"
+  "workout_weight": "Gewicht",
+  "connected_accounts_section": "Verknüpfte Konten",
+  "connected_accounts_provider_email": "E-Mail",
+  "connected_accounts_provider_google": "Google",
+  "connected_accounts_provider_apple": "Apple",
+  "connected_accounts_status_connected": "Verbunden",
+  "connected_accounts_status_not_connected": "Nicht verbunden",
+  "connected_accounts_connect": "Verbinden",
+  "connected_accounts_disconnect": "Trennen",
+  "connected_accounts_disconnect_confirm": "Möchtest du die Verknüpfung mit {provider} wirklich aufheben?",
+  "connected_accounts_disconnect_success": "{provider} wurde getrennt",
+  "connected_accounts_connect_success": "{provider} wurde verknüpft",
+  "connected_accounts_connect_error": "Fehler beim Verknüpfen von {provider}",
+  "connected_accounts_disconnect_error": "Fehler beim Trennen von {provider}",
+  "connected_accounts_last_account_warning": "Deine einzige Anmeldemethode kann nicht getrennt werden",
+  "connected_accounts_loading": "Konten werden geladen..."
 }
