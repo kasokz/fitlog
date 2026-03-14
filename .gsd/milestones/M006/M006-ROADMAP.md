@@ -41,7 +41,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: No-Reload Language Switching** `risk:low` `depends:[]`
+- [x] **S01: No-Reload Language Switching** `risk:low` `depends:[]`
   > After this: User taps language toggle in Settings and all visible text updates instantly without page reload.
 
 ## Boundary Map

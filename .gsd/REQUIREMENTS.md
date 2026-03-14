@@ -507,7 +507,7 @@ This file is the explicit capability and coverage contract for FitLog.
 - Source: user
 - Primary owning slice: M006/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: build-verified (runtime UAT pending)
 - Notes: Pattern proven in yahtzee reference project using paraglide's overwriteGetLocale/overwriteSetLocale with reactive Svelte 5 state and {#key locale} re-render.
 
 ## Deferred
@@ -618,7 +618,7 @@ This file is the explicit capability and coverage contract for FitLog.
 | R048 | core-capability | active | M005/S01 | none | unmapped |
 | R049 | launchability | active | M005/S01 | M005/S02, M005/S03 | unmapped |
 | R050 | launchability | active | M005 | none | unmapped |
-| R051 | quality-attribute | active | M006/S01 | none | unmapped |
+| R051 | quality-attribute | active | M006/S01 | none | build-verified |
 | R036 | core-capability | deferred | none | none | unmapped |
 | R037 | core-capability | deferred | none | none | unmapped |
 | R038 | differentiator | deferred | none | none | unmapped |
@@ -630,5 +630,5 @@ This file is the explicit capability and coverage contract for FitLog.
 - Active requirements: 46
 - Mapped to slices: 28 (M001: 17, M005: 10, M006: 1)
 - Provisionally mapped: 12 (M002-M004)
-- Validated: 0
+- Validated: 1 (R051 — build-verified)
 - Unmapped active requirements: 0

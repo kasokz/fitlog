@@ -10,13 +10,36 @@
 	import { revalidatePurchases } from '$lib/services/premium.js';
 	import { incrementalSync } from '$lib/services/sync.js';
 	import { initializeSocialLogin } from '$lib/services/social-login-plugin.js';
+	import {
+		getLocale,
+		setLocale,
+		overwriteGetLocale,
+		overwriteSetLocale
+	} from '$lib/paraglide/runtime.js';
 	import { App } from '@capacitor/app';
 	import { Network } from '@capacitor/network';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	const { children } = $props();
 
+	// Save original setLocale before overwriting to preserve localStorage persistence
+	const originalSetLocale = setLocale;
+
+	let locale = $state(getLocale());
 	let ready = $state(false);
+
+	// Wire reactive locale: all getLocale() consumers return the $state value
+	overwriteGetLocale(() => locale);
+
+	// Wire locale setter: update reactive state + persist without reload
+	overwriteSetLocale((newLocale) => {
+		const oldLocale = locale;
+		locale = newLocale;
+		originalSetLocale(newLocale, { reload: false });
+		console.log(`[Locale] Switched: ${oldLocale} → ${newLocale}`);
+	});
+
+	console.log(`[Locale] Overwrite wired — initial: ${locale}`);
 
 	const showBottomNav = $derived(
 		ready &&
@@ -73,11 +96,13 @@
 <Toaster />
 
 {#if ready}
-	<div class="flex min-h-screen flex-col pt-safe-top">
-		<main class="flex-1" class:pb-20={showBottomNav}>
-			{@render children()}
-		</main>
-	</div>
+	{#key locale}
+		<div class="flex min-h-screen flex-col pt-safe-top">
+			<main class="flex-1" class:pb-20={showBottomNav}>
+				{@render children()}
+			</main>
+		</div>
+	{/key}
 	{#if showBottomNav}
 		<BottomNav />
 	{/if}
