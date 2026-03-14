@@ -389,6 +389,116 @@ This file is the explicit capability and coverage contract for FitLog.
 - Validation: unmapped
 - Notes: Auto-starts when workout begins, stops on completion.
 
+### R041 — Native Google Sign-In
+- Class: core-capability
+- Status: active
+- Description: Users can tap "Continue with Google" and authenticate via the native OS credential picker (Google Credential Manager on Android, Google Sign-In on iOS).
+- Why it matters: One-tap social sign-in removes the biggest onboarding friction point on mobile.
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: M005/S02
+- Validation: unmapped
+- Notes: Requires Google OAuth web client ID for token verification.
+
+### R042 — Native Apple Sign-In (iOS)
+- Class: core-capability
+- Status: active
+- Description: iOS users can tap "Continue with Apple" and authenticate via the native ASAuthorizationController sheet.
+- Why it matters: Apple requires any app offering third-party login to also offer Sign in with Apple.
+- Source: user
+- Primary owning slice: M005/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: iOS only. Apple on Android (R051) deferred.
+
+### R043 — Social Login idToken Handoff to Better Auth
+- Class: core-capability
+- Status: active
+- Description: Native social login plugin provides an idToken that is sent to the Better Auth server for verification and session creation.
+- Why it matters: The idToken handoff is the bridge between the native credential picker and the server auth system.
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Uses POST /api/auth/sign-in/social endpoint.
+
+### R044 — Auto-Link Accounts by Email
+- Class: core-capability
+- Status: active
+- Description: When a social sign-in email matches an existing email/password account, the accounts are automatically linked so the user sees their existing data.
+- Why it matters: Prevents duplicate accounts and ensures seamless transition from email to social sign-in.
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Better Auth accountLinking with trustedProviders config.
+
+### R045 — Unified Social Sign-In/Sign-Up
+- Class: core-capability
+- Status: active
+- Description: Social login buttons appear on both sign-in and sign-up pages with the same behavior — social sign-in creates an account if needed or signs in if one exists.
+- Why it matters: Users shouldn't need to know whether they have an account — social login handles both cases.
+- Source: user
+- Primary owning slice: M005/S02
+- Supporting slices: none
+- Validation: unmapped
+- Notes: SocialLoginButtons component reused on both pages via onSuccess callback.
+
+### R046 — Social Buttons Above Email Form
+- Class: core-capability
+- Status: active
+- Description: Social login buttons appear above the email/password form with a visual "or" divider, establishing social-first layout.
+- Why it matters: Social login should be the primary, lowest-friction path with email as fallback.
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: M005/S02
+- Validation: unmapped
+- Notes: Layout: SocialLoginButtons -> "or" divider -> email form.
+
+### R047 — Connected Accounts Management in Settings
+- Class: core-capability
+- Status: active
+- Description: Settings page shows Connected Accounts section listing linked providers (Email, Google, Apple) with connect/disconnect actions and last-account protection.
+- Why it matters: Users need to manage their login methods — connect additional providers or disconnect ones they no longer want.
+- Source: user
+- Primary owning slice: M005/S03
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Disconnect disabled when only one account linked.
+
+### R048 — Post-Social-Login Sync Trigger
+- Class: core-capability
+- Status: active
+- Description: After successful social sign-in, a full sync triggers automatically so users see their data immediately.
+- Why it matters: New social sign-in users and returning users expect their data to be available right away.
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: none
+- Validation: unmapped
+- Notes: fullSync() fired as fire-and-forget in SocialLoginButtons onSuccess.
+
+### R049 — i18n for Social Login UI (de + en)
+- Class: launchability
+- Status: active
+- Description: All social login UI strings are localized in German (base) and English.
+- Why it matters: Consistent with app-wide i18n strategy (R010).
+- Source: user
+- Primary owning slice: M005/S01
+- Supporting slices: M005/S02, M005/S03
+- Validation: unmapped
+- Notes: 20 new keys (5 auth_social_* + 15 connected_accounts_*).
+
+### R050 — Credential Setup Documentation
+- Class: launchability
+- Status: active
+- Description: Step-by-step documentation for configuring Google Cloud Console and Apple Developer Portal credentials for social login.
+- Why it matters: Social login requires external service configuration that must be reproducible.
+- Source: user
+- Primary owning slice: M005
+- Supporting slices: none
+- Validation: unmapped
+- Notes: Documented in M005-CONTEXT.md.
+
 ## Deferred
 
 ### R036 — Social Features / Sharing
@@ -487,6 +597,16 @@ This file is the explicit capability and coverage contract for FitLog.
 | R033 | differentiator | active | M001/S06 | none | unmapped |
 | R034 | quality-attribute | active | M001/S06 | none | unmapped |
 | R035 | core-capability | active | M001/S03 | none | unmapped |
+| R041 | core-capability | active | M005/S01 | M005/S02 | unmapped |
+| R042 | core-capability | active | M005/S02 | none | unmapped |
+| R043 | core-capability | active | M005/S01 | none | unmapped |
+| R044 | core-capability | active | M005/S01 | none | unmapped |
+| R045 | core-capability | active | M005/S02 | none | unmapped |
+| R046 | core-capability | active | M005/S01 | M005/S02 | unmapped |
+| R047 | core-capability | active | M005/S03 | none | unmapped |
+| R048 | core-capability | active | M005/S01 | none | unmapped |
+| R049 | launchability | active | M005/S01 | M005/S02, M005/S03 | unmapped |
+| R050 | launchability | active | M005 | none | unmapped |
 | R036 | core-capability | deferred | none | none | unmapped |
 | R037 | core-capability | deferred | none | none | unmapped |
 | R038 | differentiator | deferred | none | none | unmapped |
@@ -495,8 +615,8 @@ This file is the explicit capability and coverage contract for FitLog.
 
 ## Coverage Summary
 
-- Active requirements: 35
-- Mapped to slices: 17 (M001)
+- Active requirements: 45
+- Mapped to slices: 27 (M001: 17, M005: 10)
 - Provisionally mapped: 12 (M002-M004)
 - Validated: 0
 - Unmapped active requirements: 0
