@@ -10,7 +10,7 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 
 ## Current State
 
-**M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), M003 (Monetization & Premium Features), and M004 (Cloud Sync & Platform) are complete.** The app has:
+**M001 (Core Training Engine), M002 (Analytics & Progression Intelligence), M003 (Monetization & Premium Features), M004 (Cloud Sync & Platform), M005 (Native Social Login), and M006 (No-Reload Language Switching) are complete.** The app has:
 
 - **Data Layer:** SQLite via @capgo/capacitor-fast-sql, schema v6 with 8 tables + composite analytics index + deterministic seed exercise UUIDs, repository pattern with Zod v4 validation, 554 mobile + 26 web unit tests passing
 - **Exercise Library:** 55 curated exercises with search/filter by muscle group and equipment, custom exercise creation
@@ -34,7 +34,7 @@ Fast, frictionless workout logging with RIR-driven progressive overload intellig
 - **Cloud Sync:** SvelteKit API server with Better Auth (email/password + JWT + Bearer) + Drizzle ORM + Postgres (13-table schema). Two-way sync protocol (push/pull with LWW per row) between mobile SQLite and server Postgres. Automatic sync on sign-in (full), resume, and connectivity restore. Deterministic UUID v5 for seed exercises. Schema v6 migration re-IDs existing data. Observable sync state (getSyncState/clearSyncState/triggerSync) with SyncStatusSection UI in Settings showing last sync time, error alerts, and manual sync trigger. Mobile auth service with Bearer token persistence. Sign-up/sign-in/sign-out screens.
 - **Social Login:** Native Google Sign-In (iOS + Android) and Apple Sign-In (iOS only) via @capgo/capacitor-social-login. Better Auth server configured with Google + Apple social providers and account auto-linking by email. signInWithSocial() in auth-client with idToken handoff. Social login plugin wrapper (catch-and-return, null on cancel). SocialLoginButtons component on both sign-in and sign-up pages (social-first layout with "or" divider). Apple button gated behind isIOS(). Connected Accounts section in Settings (view/connect/disconnect with last-account protection). Post-social-login sync trigger. 27 social-login-related unit tests.
 - **Data Export:** CSV (denormalized workout log + body weight) and JSON (full structured data) export from Settings with native share sheet integration via Capacitor Filesystem + Share plugins.
-- **i18n:** 430 synchronized keys in German (base) and English via Paraglide
+- **i18n:** 430 synchronized keys in German (base) and English via Paraglide. No-reload language switching via overwriteGetLocale/overwriteSetLocale + reactive state + {#key locale} re-render.
 - **Platform:** iOS and Android native projects scaffolded via Capacitor 8, builds to static output
 
 ## Architecture / Key Patterns
@@ -69,4 +69,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 - [x] M003: Monetization & Premium Features — IAP/subscription infra, purchase state management, paywall UX, premium templates, store listing optimization, end-to-end integration + store submission, i18n key sync. All 7 slices complete.
 - [x] M004: Cloud Sync & Platform — Account system (Better Auth JWT/Bearer), cross-device sync (custom REST push/pull with LWW), deterministic seed exercise UUIDs, CSV/JSON data export, sync status UI, backup/restore via sync. 5 slices complete. 524 mobile + 26 web tests passing. 410 i18n keys (de+en, zero drift).
 - [x] M005: Native Social Login — Google + Apple social sign-in via native OS credential pickers. Server social providers configured (Google + Apple) with account auto-linking. Auth-client extended with signInWithSocial(), getLinkedAccounts(), linkSocialAccount(), unlinkAccount(). Capacitor social login plugin wrapper (catch-and-return pattern). SocialLoginButtons on both sign-in and sign-up pages with social-first layout. Apple button iOS-only with nonce + profile forwarding. Connected Accounts section in Settings with connect/disconnect and last-account protection. 554 tests passing (553 + 1 pre-existing unrelated failure), 430 i18n keys (de+en, zero drift). 8 new decisions (D129-D136).
-- [x] M006: No-Reload Language Switching — Paraglide overwriteGetLocale/overwriteSetLocale wired with reactive Svelte 5 state and {#key locale} so language changes in Settings apply instantly without page reload. 1 slice, 1 decision (D137).
+- [x] M006: No-Reload Language Switching — Paraglide overwriteGetLocale/overwriteSetLocale wired with reactive Svelte 5 state and {#key locale} so language changes in Settings apply instantly without page reload. 1 slice, 1 decision (D137). Build-verified, runtime UAT pending.

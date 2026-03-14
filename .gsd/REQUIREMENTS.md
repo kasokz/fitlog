@@ -507,8 +507,8 @@ This file is the explicit capability and coverage contract for FitLog.
 - Source: user
 - Primary owning slice: M006/S01
 - Supporting slices: none
-- Validation: build-verified (runtime UAT pending)
-- Notes: Pattern proven in yahtzee reference project using paraglide's overwriteGetLocale/overwriteSetLocale with reactive Svelte 5 state and {#key locale} re-render.
+- Validation: build-verified (runtime UAT pending per S01-UAT.md)
+- Notes: Pattern proven in yahtzee reference project using paraglide's overwriteGetLocale/overwriteSetLocale with reactive Svelte 5 state and {#key locale} re-render. Implementation complete in M006/S01.
 
 ## Deferred
 
