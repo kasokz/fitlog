@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { bearer, jwt } from "better-auth/plugins";
-import { apple, google } from "better-auth/social-providers";
+
 import { env } from "$env/dynamic/private";
 import { getRequestEvent } from "$app/server";
 import { building } from "$app/environment";
@@ -15,17 +15,17 @@ export const auth = !building
 			secret: env.BETTER_AUTH_SECRET,
 			database: drizzleAdapter(db, { provider: "pg" }),
 			emailAndPassword: { enabled: true },
-			socialProviders: [
-				google({
+			socialProviders: {
+				google: {
 					clientId: env.GOOGLE_CLIENT_ID!,
 					clientSecret: env.GOOGLE_CLIENT_SECRET!,
-				}),
-				apple({
+				},
+				apple: {
 					clientId: env.APPLE_CLIENT_ID!,
 					clientSecret: env.APPLE_CLIENT_SECRET!,
 					appBundleIdentifier: "com.fitlog.app",
-				}),
-			],
+				},
+			},
 			account: {
 				accountLinking: {
 					trustedProviders: ["google", "apple", "email-password"],

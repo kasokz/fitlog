@@ -219,7 +219,7 @@
 			});
 			if (transaction) {
 				lastResult = {
-					message: m.settings_iap_transaction_success({ id: transaction.transactionIdentifier }),
+					message: m.settings_iap_transaction_success({ id: transaction.transactionId }),
 					success: true,
 				};
 			} else {

@@ -95,7 +95,7 @@ async function addCompletedWorkingSet(
 async function addNonWorkingSet(
 	sessionId: string,
 	exerciseId: string,
-	setType: string,
+	setType: (typeof SetType)[keyof typeof SetType],
 	weight: number,
 	reps: number,
 	completed: boolean

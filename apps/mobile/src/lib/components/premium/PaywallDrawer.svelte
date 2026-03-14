@@ -38,8 +38,8 @@
 
 	// ── Derived: split products by type ──
 
-	const subscriptionIds = new Set([PRODUCT_IDS.PREMIUM_ANNUAL, PRODUCT_IDS.PREMIUM_MONTHLY]);
-	const templatePackIds = new Set([PRODUCT_IDS.TEMPLATE_PACK]);
+	const subscriptionIds: Set<string> = new Set([PRODUCT_IDS.PREMIUM_ANNUAL, PRODUCT_IDS.PREMIUM_MONTHLY]);
+	const templatePackIds: Set<string> = new Set([PRODUCT_IDS.TEMPLATE_PACK]);
 
 	const subscriptionProducts = $derived(
 		products.filter((p) => subscriptionIds.has(p.identifier))

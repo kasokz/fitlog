@@ -174,7 +174,7 @@ export async function purchaseProduct(
 		});
 		console.log('[PurchasePlugin] purchaseProduct: success', {
 			productId: transaction.productIdentifier,
-			transactionId: transaction.transactionIdentifier,
+			transactionId: transaction.transactionId,
 		});
 		return transaction;
 	} catch (error) {

@@ -141,13 +141,13 @@ interface ExportJSON {
 	exported_at: string;
 	version: number;
 	exercises: Record<string, SQLValue>[];
-	programs: (Record<string, SQLValue> & {
-		training_days: (Record<string, SQLValue> & {
+	programs: (Record<string, unknown> & {
+		training_days: (Record<string, unknown> & {
 			assignments: Record<string, SQLValue>[];
 		})[];
 	})[];
 	mesocycles: Record<string, SQLValue>[];
-	workout_sessions: (Record<string, SQLValue> & {
+	workout_sessions: (Record<string, unknown> & {
 		sets: Record<string, SQLValue>[];
 	})[];
 	body_weight_entries: Record<string, SQLValue>[];
@@ -218,7 +218,7 @@ export async function generateFullJSON(): Promise<string> {
 
 	const daysByProgram = new Map<
 		string,
-		(Record<string, SQLValue> & { assignments: Record<string, SQLValue>[] })[]
+		(Record<string, unknown> & { assignments: Record<string, SQLValue>[] })[]
 	>();
 	for (const td of trainingDays) {
 		const programId = td.program_id as string;

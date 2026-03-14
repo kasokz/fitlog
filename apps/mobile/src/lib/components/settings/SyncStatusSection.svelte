@@ -8,7 +8,7 @@
 	import { getSyncState, triggerSync } from '$lib/services/sync.js';
 	import type { SyncState } from '$lib/services/sync.js';
 
-	let syncState: SyncState | null = $state(null);
+	let syncState = $state<SyncState | null>(null);
 	let syncing = $state(false);
 
 	$effect(() => {

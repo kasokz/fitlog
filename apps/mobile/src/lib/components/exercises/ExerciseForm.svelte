@@ -12,7 +12,7 @@
 	import { Loader2 } from '@lucide/svelte';
 	import { m } from '$lib/paraglide/messages.js';
 
-	import { exerciseInsertSchema, MUSCLE_GROUPS, EQUIPMENT_LIST, type MuscleGroup } from '$lib/types/exercise.js';
+	import { exerciseInsertSchema, MUSCLE_GROUPS, EQUIPMENT_LIST, type MuscleGroup, type Equipment } from '$lib/types/exercise.js';
 	import { ExerciseRepository } from '$lib/db/repositories/exercise.js';
 	import { getMuscleGroupLabel, getEquipmentLabel } from './i18n-maps.js';
 
@@ -113,7 +113,7 @@
 					type="single"
 					value={$formData.muscle_group}
 					onValueChange={(v) => {
-						$formData.muscle_group = v;
+						$formData.muscle_group = v as MuscleGroup;
 						// Clear secondary muscles that match the new primary
 						if ($formData.secondary_muscle_groups) {
 							$formData.secondary_muscle_groups = $formData.secondary_muscle_groups.filter(
@@ -171,7 +171,7 @@
 					type="single"
 					value={$formData.equipment}
 					onValueChange={(v) => {
-						$formData.equipment = v;
+						$formData.equipment = v as Equipment;
 					}}
 				>
 					<Select.Trigger {...props} class="w-full">

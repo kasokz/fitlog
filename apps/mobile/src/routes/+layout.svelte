@@ -39,7 +39,7 @@
 		console.log(`[Locale] Switched: ${oldLocale} → ${newLocale}`);
 	});
 
-	console.log(`[Locale] Overwrite wired — initial: ${locale}`);
+	console.log(`[Locale] Overwrite wired — initial: ${getLocale()}`);
 
 	const showBottomNav = $derived(
 		ready &&

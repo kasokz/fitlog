@@ -15,6 +15,8 @@ function makeMesocycle(overrides: Partial<Mesocycle> = {}): Mesocycle {
 		deload_week_number: 4,
 		start_date: '2025-01-01',
 		current_week: 1,
+		created_at: '2025-01-01T00:00:00',
+		updated_at: '2025-01-01T00:00:00',
 		deleted_at: null,
 		...overrides
 	};
@@ -33,6 +35,8 @@ function makeWorkingSet(overrides: Partial<WorkoutSet> = {}): WorkoutSet {
 		rir: 2,
 		completed: true,
 		rest_seconds: null,
+		created_at: '2025-01-01T00:00:00',
+		updated_at: '2025-01-01T00:00:00',
 		deleted_at: null,
 		...overrides
 	};

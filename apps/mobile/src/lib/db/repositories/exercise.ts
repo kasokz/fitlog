@@ -209,7 +209,7 @@ export const ExerciseRepository = {
 	 * Update an existing exercise. Only updates provided fields.
 	 * Validates input with Zod. Returns the updated exercise or null if not found.
 	 */
-	async update(id: string, data: ExerciseUpdate): Promise<Exercise | null> {
+	async update(id: string, data: Omit<ExerciseUpdate, 'id'>): Promise<Exercise | null> {
 		const validated = exerciseUpdateSchema.parse({ id, ...data });
 
 		const setClauses: string[] = [];

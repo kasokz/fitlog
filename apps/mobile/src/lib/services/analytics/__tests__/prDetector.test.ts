@@ -23,8 +23,6 @@ function makeSet(overrides: Partial<WorkoutSet> & { weight: number | null; reps:
 		assignment_id: null,
 		set_number: 1,
 		set_type: 'working',
-		weight: overrides.weight,
-		reps: overrides.reps,
 		rir: null,
 		completed: true,
 		rest_seconds: null,

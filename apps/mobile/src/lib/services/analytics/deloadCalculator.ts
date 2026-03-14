@@ -141,6 +141,8 @@ export function applyDeloadTransform(
 			rir: c.rir,
 			completed: false,
 			rest_seconds: null,
+			created_at: '',
+			updated_at: '',
 			deleted_at: null
 		})) satisfies WorkoutSet[];
 

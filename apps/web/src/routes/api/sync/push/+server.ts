@@ -10,7 +10,7 @@
  */
 
 import { json } from '@sveltejs/kit';
-import { sql, type SQL } from 'drizzle-orm';
+import { sql, type SQL, type SQLChunk } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { requireUserId } from '$lib/server/auth';
 import { resolveError } from '$lib/server/error';
@@ -172,8 +172,8 @@ function buildInsertParts(
 	row: Record<string, unknown>,
 	userId: string
 ): { columnsSql: SQL; valuesSql: SQL } {
-	const cols: SQL[] = [sql.identifier('user_id')];
-	const vals: SQL[] = [sql`${userId}`];
+	const cols: SQLChunk[] = [sql.identifier('user_id')];
+	const vals: SQLChunk[] = [sql`${userId}`];
 
 	for (const col of tableDef.pushColumns) {
 		if (col in row) {

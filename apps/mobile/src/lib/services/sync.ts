@@ -11,6 +11,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { getStoredToken, isSignedIn, API_BASE_URL } from './auth-client.js';
 import { dbQuery, dbExecute } from '../db/database.js';
+import type { SQLValue } from '@capgo/capacitor-fast-sql';
 
 // ── Constants ──
 
@@ -273,7 +274,7 @@ async function upsertRow(
 	columns: readonly string[],
 ): Promise<void> {
 	const placeholders = columns.map(() => '?').join(', ');
-	const values = columns.map((col) => row[col] ?? null);
+	const values = columns.map((col) => (row[col] ?? null) as SQLValue);
 	await dbExecute(
 		`INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
 		values,
@@ -308,7 +309,7 @@ async function upsertBodyWeightEntry(
 			.filter((col) => col !== 'id')
 			.map((col) => `${col} = ?`)
 			.join(', ');
-		const values = columns.filter((col) => col !== 'id').map((col) => row[col] ?? null);
+		const values: SQLValue[] = columns.filter((col) => col !== 'id').map((col) => (row[col] ?? null) as SQLValue);
 		values.push(rowId);
 		await dbExecute(
 			`UPDATE body_weight_entries SET ${setClauses} WHERE id = ?`,
@@ -331,7 +332,7 @@ async function upsertBodyWeightEntry(
 			const setClauses = columns
 				.map((col) => `${col} = ?`)
 				.join(', ');
-			const values = columns.map((col) => row[col] ?? null);
+			const values: SQLValue[] = columns.map((col) => (row[col] ?? null) as SQLValue);
 			values.push(conflictId);
 			await dbExecute(
 				`UPDATE body_weight_entries SET ${setClauses} WHERE id = ?`,
@@ -344,7 +345,7 @@ async function upsertBodyWeightEntry(
 
 	// No conflict — INSERT
 	const placeholders = columns.map(() => '?').join(', ');
-	const values = columns.map((col) => row[col] ?? null);
+	const values = columns.map((col) => (row[col] ?? null) as SQLValue);
 	await dbExecute(
 		`INSERT INTO body_weight_entries (${columns.join(', ')}) VALUES (${placeholders})`,
 		values,
