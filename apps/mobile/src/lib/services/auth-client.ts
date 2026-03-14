@@ -13,6 +13,7 @@
  * @module
  */
 
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
 import { Preferences } from '@capacitor/preferences';
 
 // ── Configuration ──
@@ -22,7 +23,7 @@ import { Preferences } from '@capacitor/preferences';
  * In local development, this points to the local dev server.
  * For production, configure per-environment.
  */
-export const API_BASE_URL = 'http://localhost:5173';
+export const API_BASE_URL = PUBLIC_API_BASE_URL;
 
 // ── Preferences Keys ──
 
@@ -96,7 +97,7 @@ async function storeCredentials(token: string, user: BetterAuthUser): Promise<vo
 		Preferences.set({ key: TOKEN_KEY, value: token }),
 		Preferences.set({ key: USER_ID_KEY, value: user.id }),
 		Preferences.set({ key: USER_EMAIL_KEY, value: user.email }),
-		Preferences.set({ key: USER_NAME_KEY, value: user.name }),
+		Preferences.set({ key: USER_NAME_KEY, value: user.name })
 	]);
 }
 
@@ -108,7 +109,7 @@ async function clearCredentials(): Promise<void> {
 		Preferences.remove({ key: TOKEN_KEY }),
 		Preferences.remove({ key: USER_ID_KEY }),
 		Preferences.remove({ key: USER_EMAIL_KEY }),
-		Preferences.remove({ key: USER_NAME_KEY }),
+		Preferences.remove({ key: USER_NAME_KEY })
 	]);
 }
 
@@ -155,18 +156,14 @@ function parseErrorMessage(body: unknown): string {
  *
  * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
  */
-export async function signUp(
-	email: string,
-	password: string,
-	name: string,
-): Promise<AuthResult> {
+export async function signUp(email: string, password: string, name: string): Promise<AuthResult> {
 	try {
 		console.log(`[Auth] signUp: attempting for ${email}`);
 
 		const response = await fetch(`${API_BASE_URL}/api/auth/sign-up/email`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password, name }),
+			body: JSON.stringify({ email, password, name })
 		});
 
 		if (!response.ok) {
@@ -202,17 +199,14 @@ export async function signUp(
  *
  * @returns `{success: true}` on success, `{success: false, error: string}` on failure.
  */
-export async function signIn(
-	email: string,
-	password: string,
-): Promise<AuthResult> {
+export async function signIn(email: string, password: string): Promise<AuthResult> {
 	try {
 		console.log(`[Auth] signIn: attempting for ${email}`);
 
 		const response = await fetch(`${API_BASE_URL}/api/auth/sign-in/email`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email, password }),
+			body: JSON.stringify({ email, password })
 		});
 
 		if (!response.ok) {
@@ -288,7 +282,7 @@ export async function getAuthState(): Promise<AuthState> {
 			Preferences.get({ key: TOKEN_KEY }),
 			Preferences.get({ key: USER_ID_KEY }),
 			Preferences.get({ key: USER_EMAIL_KEY }),
-			Preferences.get({ key: USER_NAME_KEY }),
+			Preferences.get({ key: USER_NAME_KEY })
 		]);
 
 		const hasToken = tokenResult.value !== null;
@@ -297,7 +291,7 @@ export async function getAuthState(): Promise<AuthState> {
 			isSignedIn: hasToken,
 			userId: userIdResult.value,
 			email: emailResult.value,
-			name: nameResult.value,
+			name: nameResult.value
 		};
 	} catch (error) {
 		console.error('[Auth] getAuthState: failed to read', error);
@@ -305,7 +299,7 @@ export async function getAuthState(): Promise<AuthState> {
 			isSignedIn: false,
 			userId: null,
 			email: null,
-			name: null,
+			name: null
 		};
 	}
 }
@@ -333,7 +327,7 @@ export async function signInWithSocial(
 	idToken: string,
 	accessToken?: string,
 	nonce?: string,
-	user?: { name?: { firstName?: string; lastName?: string }; email?: string },
+	user?: { name?: { firstName?: string; lastName?: string }; email?: string }
 ): Promise<AuthResult> {
 	try {
 		console.log(`[Auth] signInWithSocial: attempting with ${provider}`);
@@ -348,8 +342,8 @@ export async function signInWithSocial(
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				provider,
-				idToken: idTokenPayload,
-			}),
+				idToken: idTokenPayload
+			})
 		});
 
 		if (!response.ok) {
@@ -363,10 +357,7 @@ export async function signInWithSocial(
 
 		// Extract token: prefer set-auth-token header, fall back to body paths
 		const headerToken = extractToken(response, body);
-		const token = headerToken
-			|| body.data?.session?.token
-			|| body.token
-			|| null;
+		const token = headerToken || body.data?.session?.token || body.token || null;
 
 		if (!token) {
 			console.error('[Auth] signInWithSocial: no token in response');
@@ -426,7 +417,7 @@ export async function getLinkedAccounts(): Promise<LinkedAccountsResult> {
 
 		const response = await fetch(`${API_BASE_URL}/api/auth/list-accounts`, {
 			method: 'GET',
-			headers: { Authorization: `Bearer ${token}` },
+			headers: { Authorization: `Bearer ${token}` }
 		});
 
 		if (!response.ok) {
@@ -463,7 +454,7 @@ export async function linkSocialAccount(
 	provider: string,
 	idToken: string,
 	accessToken?: string,
-	nonce?: string,
+	nonce?: string
 ): Promise<AuthResult> {
 	try {
 		console.log(`[Auth] linkSocialAccount: attempting with ${provider}`);
@@ -478,12 +469,12 @@ export async function linkSocialAccount(
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
+				Authorization: `Bearer ${token}`
 			},
 			body: JSON.stringify({
 				provider,
-				idToken: { token: idToken, accessToken, nonce },
-			}),
+				idToken: { token: idToken, accessToken, nonce }
+			})
 		});
 
 		if (!response.ok) {
@@ -525,9 +516,9 @@ export async function unlinkAccount(providerId: string): Promise<AuthResult> {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
+				Authorization: `Bearer ${token}`
 			},
-			body: JSON.stringify({ providerId }),
+			body: JSON.stringify({ providerId })
 		});
 
 		if (!response.ok) {
